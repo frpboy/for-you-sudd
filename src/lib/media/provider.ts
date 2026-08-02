@@ -9,7 +9,7 @@ const extension = (path: string) => path.slice(path.lastIndexOf(".")).toLowerCas
 export function findPrivateMedia(id: string) {
   const content = getContent(); const media = getMedia(content, id);
   if (!media) return null;
-  const root = content.mode === "demo" ? resolve(process.cwd(), "public") : (process.env.PRIVATE_MEDIA_ROOT ?? process.cwd());
+  const root = content.mode === "demo" ? resolve(process.cwd(), "public") : (process.env.PRIVATE_MEDIA_ROOT ?? resolve(process.cwd(), "private-media"));
   const source = resolve(/* turbopackIgnore: true */ root, media.privatePath);
   if (!existsSync(source) || basename(source) !== basename(media.privatePath)) return null;
   return { source, media, size: statSync(source).size, type: types[extension(source)] ?? "application/octet-stream" };

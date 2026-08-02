@@ -10,7 +10,7 @@ const projectRoot = process.cwd();
 const bundledContent: Record<string, unknown> = { "content/content-config.demo.json": demoContent, "content/content-config.private.json": privateContent };
 export const getContent = cache((): StoryContent => {
   const configuredContent = process.env.PRIVATE_CONTENT_CONFIG;
-  const configuredPath = process.env.CONTENT_CONFIG_PATH ?? "content/content-config.demo.json";
+  const configuredPath = process.env.CONTENT_CONFIG_PATH ?? "content/content-config.private.json";
   const path = isAbsolute(configuredPath) ? configuredPath : resolve(/* turbopackIgnore: true */ projectRoot, configuredPath);
   const raw = configuredContent ? JSON.parse(configuredContent) : (bundledContent[configuredPath] ?? JSON.parse(readFileSync(path, "utf8"))) as unknown;
   return contentSchema.parse(raw);
