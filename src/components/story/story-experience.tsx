@@ -94,6 +94,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   );
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [confetti, setConfetti] = useState(false);
+  const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
@@ -187,7 +188,15 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       void audio.current?.play().catch(() => setMuted(true));
   };
   return (
-    <main className="story-shell">
+    <main
+      className="story-shell"
+      onClickCapture={(event) => {
+        if (!event.detail) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
+      }}
+    >
+      {tapPulse && <span key={tapPulse.id} className="tap-pulse" aria-hidden="true" style={{ left: tapPulse.x, top: tapPulse.y }} onAnimationEnd={() => setTapPulse(null)} />}
       <audio ref={audio} src={musicSrc} loop preload="metadata" />
       {confetti && (
         <div className="confetti" aria-hidden="true">

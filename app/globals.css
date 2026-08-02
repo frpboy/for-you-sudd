@@ -495,11 +495,33 @@ input:focus-visible {
   font-weight: bold;
 }
 .story-shell {
+  position: relative;
   max-width: 700px;
   margin: auto;
   padding: env(safe-area-inset-top) 18px
     calc(82px + env(safe-area-inset-bottom));
   overflow: hidden;
+}
+.tap-pulse {
+  position: absolute;
+  z-index: 30;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--primary-dark);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: tap-pulse 560ms ease-out forwards;
+}
+.tap-pulse:after {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--primary);
+  border-radius: inherit;
+  content: "";
+}
+@keyframes tap-pulse {
+  to { opacity: 0; transform: translate(-50%, -50%) scale(4.5); }
 }
 .story-header {
   display: flex;
