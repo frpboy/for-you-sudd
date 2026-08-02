@@ -796,7 +796,7 @@ function Quiz({
         <fieldset className="quiz-options">
           <legend className="sr-only">Choose your answer</legend>
           {item.choices.map((choice) => (
-            <label key={choice}>
+            <label key={choice} onClick={() => updateAnswer(choice)}>
               <input type="radio" name={`quiz-${item.id}`} value={choice} checked={answer === choice} onChange={() => updateAnswer(choice)} />
               <span>{choice}</span>
             </label>

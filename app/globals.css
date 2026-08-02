@@ -419,13 +419,16 @@ input:focus-visible {
 }
 .quiz-options label {
   position: relative;
+  cursor: pointer;
 }
 .quiz-options input {
   position: absolute;
   opacity: 0;
 }
 .quiz-options span {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-height: 52px;
   padding: 15px 18px;
   border: 1px solid #5b75535c;
@@ -434,10 +437,24 @@ input:focus-visible {
   color: var(--text);
   font-weight: 600;
 }
+.quiz-options span::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  box-sizing: border-box;
+  border: 2px solid var(--deep);
+  border-radius: 50%;
+}
 .quiz-options input:checked + span {
   border-color: var(--deep);
   background: #edf3e9;
   box-shadow: 0 0 0 2px var(--deep);
+}
+.quiz-options input:checked + span::before {
+  border-color: var(--deep);
+  background: var(--deep);
+  box-shadow: inset 0 0 0 4px #edf3e9;
 }
 .quiz-options input:focus-visible + span {
   outline: 3px solid var(--accent);

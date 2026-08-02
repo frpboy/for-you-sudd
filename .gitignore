@@ -6,6 +6,7 @@ test-results/
 .env.local
 .env.vercel
 .env.production
+PRIVATE_HANDOFF.md
 content/content-config.private.json
 private-media/*
 !private-media/.gitkeep
