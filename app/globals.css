@@ -538,13 +538,20 @@ input:focus-visible {
   gap: 26px;
 }
 .chapter-image {
-  min-height: 44vh;
+  width: min(100%, 520px);
+  align-self: center;
   border-radius: 28px;
   overflow: hidden;
-  background: var(--surface);
   box-shadow: var(--shadow);
+  line-height: 0;
 }
-.chapter-image img,
+.chapter-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  object-fit: contain;
+}
 .photo-button img,
 .video-card img {
   display: block;
@@ -808,9 +815,6 @@ input:focus-visible {
   .chapter {
     grid-template-columns: 1.1fr 1fr;
     align-items: center;
-  }
-  .chapter-image {
-    min-height: 58vh;
   }
 }
 @media (prefers-reduced-motion: reduce) {
