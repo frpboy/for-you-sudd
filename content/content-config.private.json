@@ -34,7 +34,7 @@
     { "id":"photo-last","kind":"image","privatePath":"IMG_8693.JPG.jpeg","alt":"Shared black-and-white portrait","caption":"Always us","approval":"pending" },
     { "id":"video-scooter","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.44.30 PM.mp4","alt":"Short scooter memory video","caption":"A little ride","approval":"pending","durationSeconds":4,"posterId":"photo-first" },
     { "id":"video-car","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.44.45 PM.mp4","alt":"Short car memory video","caption":"A little drive","approval":"pending","durationSeconds":3,"posterId":"photo-car" },
-    { "id":"video-moon","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.10 PM.mp4","alt":"Short filtered portrait video","caption":"A moonlit moment","approval":"pending","durationSeconds":2,"posterId":"photo-last" },
+    { "id":"video-moon","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.10 PM.mp4","alt":"Short filtered portrait video","caption":"A moonlit moment","approval":"pending","durationSeconds":2,"posterId":"photo-smile" },
     { "id":"video-final","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.25 PM.mp4","alt":"Short shared portrait video","caption":"A final little smile","approval":"pending","durationSeconds":1,"posterId":"photo-sky" },
     { "id":"music-selected","kind":"audio","privatePath":"Sun Raha Hai Na Tu (SlowedReverb)#song #shorts.mp4","alt":"Selected background track","caption":"Background music","approval":"pending" },
     { "id":"voice-birthday","kind":"audio","privatePath":"voice-note.m4a","alt":"A private birthday voice note","caption":"A voice message from Mohammed","approval":"pending" },
@@ -47,7 +47,7 @@
   "albums": [
     { "id":"first-photo","title":"The First Picture","mediaIds":["photo-first"] },
     { "id":"little-moments","title":"Our Little Moments","mediaIds":["photo-sky","photo-cafe","photo-hands","photo-car","photo-rose","photo-escalator","photo-close","photo-night","photo-smile","photo-mirror"] },
-    { "id":"favourites","title":"Favourite Photos","mediaIds":["photo-city","photo-flower","photo-daylight","photo-garden","photo-green","photo-peace","photo-outdoor","photo-tree","photo-moon","photo-glasses","photo-filter","photo-last"] }
+    { "id":"favourites","title":"Favourite Photos","mediaIds":["photo-city","photo-flower","photo-daylight","photo-garden","photo-green","photo-peace","photo-outdoor","photo-tree","photo-glasses"] }
   ],
   "videos":[{"id":"ride","title":"A little ride","mediaId":"video-scooter"},{"id":"drive","title":"A little drive","mediaId":"video-car"},{"id":"moon","title":"A moonlit moment","mediaId":"video-moon"},{"id":"closing","title":"One last smile","mediaId":"video-final"}],
   "voice":{"title":"A voice message from Rashi.","mediaId":"voice-birthday"},
