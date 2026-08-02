@@ -529,24 +529,26 @@ input:focus-visible {
 }
 .ambient-particles i {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.34;
-  filter: blur(0.3px);
-  animation: ambient-float 7s ease-in-out infinite alternate;
+  background: #e8cda7;
+  box-shadow: 0 0 18px #e8cda7b3;
+  opacity: 0.62;
+  animation: ambient-float 6s ease-in-out infinite alternate;
 }
-.ambient-particles i:nth-child(1) { left: 10%; top: 23%; animation-delay: -4s; }
-.ambient-particles i:nth-child(2) { left: 23%; top: 71%; width: 4px; height: 4px; animation-delay: -1s; }
-.ambient-particles i:nth-child(3) { left: 81%; top: 18%; background: var(--primary); animation-delay: -5s; }
-.ambient-particles i:nth-child(4) { left: 87%; top: 62%; width: 5px; height: 5px; animation-delay: -3s; }
-.ambient-particles i:nth-child(5) { left: 7%; top: 86%; background: var(--primary); animation-delay: -6s; }
-.ambient-particles i:nth-child(6) { left: 67%; top: 80%; width: 4px; height: 4px; animation-delay: -2s; }
-.ambient-particles i:nth-child(7) { left: 53%; top: 12%; width: 3px; height: 3px; animation-delay: -7s; }
+.ambient-particles i:nth-child(1) { left: 7%; top: 21%; animation-delay: -4s; }
+.ambient-particles i:nth-child(2) { left: 18%; top: 72%; width: 6px; height: 6px; animation-delay: -1s; }
+.ambient-particles i:nth-child(3) { left: 85%; top: 16%; background: #b9d8b1; box-shadow: 0 0 18px #b9d8b1b3; animation-delay: -5s; }
+.ambient-particles i:nth-child(4) { left: 90%; top: 57%; width: 7px; height: 7px; animation-delay: -3s; }
+.ambient-particles i:nth-child(5) { left: 5%; top: 86%; background: #b9d8b1; box-shadow: 0 0 18px #b9d8b1b3; animation-delay: -6s; }
+.ambient-particles i:nth-child(6) { left: 75%; top: 82%; width: 6px; height: 6px; animation-delay: -2s; }
+.ambient-particles i:nth-child(7) { left: 55%; top: 10%; width: 5px; height: 5px; animation-delay: -7s; }
+.ambient-particles i:nth-child(8) { left: 31%; top: 37%; width: 6px; height: 6px; background: #b9d8b1; box-shadow: 0 0 18px #b9d8b1b3; animation-delay: -4.5s; }
+.ambient-particles i:nth-child(9) { left: 72%; top: 34%; width: 5px; height: 5px; animation-delay: -2.5s; }
 @keyframes ambient-float {
-  from { transform: translate3d(0, 0, 0) scale(0.8); }
-  to { transform: translate3d(12px, -28px, 0) scale(1.15); }
+  from { transform: translate3d(0, 0, 0) scale(0.75); }
+  to { transform: translate3d(16px, -38px, 0) scale(1.2); }
 }
 .story-header,
 .story-view,

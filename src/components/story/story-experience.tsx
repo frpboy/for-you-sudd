@@ -199,7 +199,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     >
       {showAmbient && (
         <div className="ambient-particles" aria-hidden="true">
-          {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
+          {Array.from({ length: 9 }, (_, index) => <i key={index} />)}
         </div>
       )}
       {tapPulse && <span key={tapPulse.id} className="tap-pulse" aria-hidden="true" style={{ left: tapPulse.x, top: tapPulse.y }} onAnimationEnd={() => setTapPulse(null)} />}
