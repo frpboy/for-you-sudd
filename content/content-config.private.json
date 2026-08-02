@@ -42,7 +42,8 @@
     { "id":"note-heart","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.15.44 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"A prettier heart","approval":"pending" },
     { "id":"note-only-you","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.11.29 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Only you","approval":"pending" },
     { "id":"note-rare","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.07.49 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Rare, so love her right","approval":"pending" },
-    { "id":"note-prettiest","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.01.02 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"The prettiest girl","approval":"pending" }
+    { "id":"note-prettiest","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.01.02 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"The prettiest girl","approval":"pending" },
+    { "id":"note-choose-you","kind":"image","privatePath":"note-choose-you.png","alt":"A Malayalam love note ending with I choose you today, tomorrow, and forever","caption":"Today, tomorrow, forever","approval":"pending" }
   ],
   "albums": [
     { "id":"first-photo","title":"The First Picture","mediaIds":["photo-first"] },
@@ -59,6 +60,6 @@
     {"id":"favourite-moment","question":"Which moment do I love the most?","acceptedAnswers":["Spending time together after fights"],"hint":"It is not a place — it is choosing us."}
   ],
   "memories":[],"reasons":[],"dreams":["Switzerland."],
-  "letter":{"body":"Some things are better kept in your own handwriting.","signature":"Rashi","mediaIds":["note-universe","note-heart","note-only-you","note-rare","note-prettiest"]},"secretMediaIds":["photo-last","photo-moon","photo-filter"],"finale":"Happy Birthday, Sudd.","musicMediaId":"music-selected",
+  "letter":{"body":"Some things are better kept in your own handwriting.","signature":"Rashi","mediaIds":["note-universe","note-heart","note-only-you","note-rare","note-prettiest","note-choose-you"]},"secretMediaIds":["photo-last","photo-moon","photo-filter"],"finale":"Happy Birthday, Sudd.","musicMediaId":"music-selected",
   "features":{"memoryJar":false,"reasons":false,"dreams":true,"cake":true,"confetti":true,"secretMemories":true},"privacy":{"approvedForProduction":false}
 }
