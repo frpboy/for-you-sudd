@@ -1,0 +1,16 @@
+{
+  "project": "Our Story - Mobile Birthday Experience",
+  "baseline_date": "2026-08-02",
+  "target_birthday": "2026-08-08",
+  "primary_device": "mobile phone, portrait-first",
+  "file_count_excluding_internal_qa": 139,
+  "master_specification_words": 11825,
+  "master_pdf_pages": 59,
+  "workbook_sheets": 12,
+  "confirmed_media_binaries_received": 0,
+  "referenced_missing_pngs": 4,
+  "privacy_scan": "passed",
+  "schema_validation": "passed",
+  "docx_integrity": "passed",
+  "pdf_preflight": "passed"
+}

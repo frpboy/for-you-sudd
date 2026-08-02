@@ -1,0 +1,163 @@
+# Complete File Map
+
+Final package files (excluding internal QA renders): **139**.
+
+## Category counts
+
+- `00-start-here`: 6
+- `01-product`: 10
+- `02-ux-ui`: 9
+- `03-engineering`: 18
+- `04-ai-agents`: 17
+- `05-project-management`: 7
+- `06-quality-assurance`: 11
+- `07-content-media`: 8
+- `08-templates`: 13
+- `09-starter-blueprint`: 23
+- `10-legal-privacy`: 4
+- `11-client-handoff`: 4
+- `12-references`: 2
+- `13-deliverables`: 4
+- `root`: 3
+
+## Files
+
+- `00-start-here/COMPLETE_FILE_MAP.md`
+- `00-start-here/DECISIONS_AND_OPEN_ITEMS.md`
+- `00-start-here/DOCUMENT_INDEX.md`
+- `00-start-here/REQUIREMENTS_TRACEABILITY_MATRIX.md`
+- `00-start-here/SOURCE_REQUIREMENTS_BASELINE.md`
+- `00-start-here/START_HERE.md`
+- `01-product/ASSUMPTIONS_CONSTRAINTS_DEPENDENCIES.md`
+- `01-product/CLIENT_DISCOVERY_AND_APPROVAL_FORM.md`
+- `01-product/FRD.md`
+- `01-product/NON_FUNCTIONAL_REQUIREMENTS.md`
+- `01-product/PERSONAS_AND_STAKEHOLDERS.md`
+- `01-product/PRD.md`
+- `01-product/RISK_REGISTER.md`
+- `01-product/SCOPE_AND_PRIORITIZATION.md`
+- `01-product/SRS.md`
+- `01-product/USER_STORIES_AND_ACCEPTANCE.md`
+- `02-ux-ui/ACCESSIBILITY_SPECIFICATION.md`
+- `02-ux-ui/COPY_DECK_AND_CONTENT_TONE.md`
+- `02-ux-ui/DESIGN_SYSTEM.md`
+- `02-ux-ui/INFORMATION_ARCHITECTURE_AND_FLOW.md`
+- `02-ux-ui/MOBILE_UX_SPECIFICATION.md`
+- `02-ux-ui/MOTION_AND_MICROINTERACTIONS.md`
+- `02-ux-ui/RESPONSIVE_AND_SAFE_AREA_RULES.md`
+- `02-ux-ui/SCREEN_SPECIFICATIONS.md`
+- `02-ux-ui/UX_EDGE_CASES.md`
+- `03-engineering/ADR-001-STATE_DRIVEN_STORY.md`
+- `03-engineering/ADR-002-ANIMATION_SYSTEM.md`
+- `03-engineering/ADR-003-PRIVATE_MEDIA_DELIVERY.md`
+- `03-engineering/ADR-004-FILE_BASED_CONTENT.md`
+- `03-engineering/AUDIO_AND_MEDIA_STATE_MANAGEMENT.md`
+- `03-engineering/BACKUP_ROLLBACK_RETIREMENT.md`
+- `03-engineering/BROWSER_DEVICE_COMPATIBILITY.md`
+- `03-engineering/CODING_STANDARDS.md`
+- `03-engineering/DATA_MODEL_AND_CONTENT_SCHEMA.md`
+- `03-engineering/DEPLOYMENT_AND_ENVIRONMENTS.md`
+- `03-engineering/DOMAIN_AND_DNS_RUNBOOK.md`
+- `03-engineering/ERROR_HANDLING_AND_RECOVERY.md`
+- `03-engineering/MEDIA_PIPELINE.md`
+- `03-engineering/PERFORMANCE_ENGINEERING.md`
+- `03-engineering/REPOSITORY_AND_FOLDER_STRUCTURE.md`
+- `03-engineering/SECURITY_AND_PRIVACY_ARCHITECTURE.md`
+- `03-engineering/TECHNICAL_ARCHITECTURE.md`
+- `03-engineering/TECH_STACK_AND_VERSION_POLICY.md`
+- `04-ai-agents/AGENTS.md`
+- `04-ai-agents/AGENT_HANDOFF_TEMPLATE.md`
+- `04-ai-agents/AI_AGENT_OPERATING_MANUAL.md`
+- `04-ai-agents/CONTEXT_AND_PROMPTING_RULES.md`
+- `04-ai-agents/DEFINITION_OF_READY_AND_DONE.md`
+- `04-ai-agents/IMPLEMENTATION_SEQUENCE.md`
+- `04-ai-agents/REVIEW_AND_MERGE_PROTOCOL.md`
+- `04-ai-agents/TASK_CONTRACT.md`
+- `04-ai-agents/prompts/DOCUMENTATION_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/FEATURE_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/FRONTEND_PLATFORM_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/MEDIA_PIPELINE_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/ORCHESTRATOR_PROMPT.md`
+- `04-ai-agents/prompts/PRODUCT_REQUIREMENTS_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/QA_RELEASE_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/SECURITY_PRIVACY_AGENT_PROMPT.md`
+- `04-ai-agents/prompts/UX_ACCESSIBILITY_AGENT_PROMPT.md`
+- `05-project-management/DECISION_LOG_TEMPLATE.md`
+- `05-project-management/DELIVERY_PLAN_2026-08-02_TO_08.md`
+- `05-project-management/DEPENDENCY_AND_CRITICAL_PATH.md`
+- `05-project-management/PRIORITIZED_BACKLOG.md`
+- `05-project-management/SCOPE_CHANGE_CONTROL.md`
+- `05-project-management/STATUS_AND_COMMUNICATION_TEMPLATE.md`
+- `05-project-management/WORK_BREAKDOWN_STRUCTURE.md`
+- `06-quality-assurance/ACCESSIBILITY_TEST_PLAN.md`
+- `06-quality-assurance/BUG_REPORT_TEMPLATE.md`
+- `06-quality-assurance/DEVICE_BROWSER_MATRIX.md`
+- `06-quality-assurance/FUNCTIONAL_TEST_CASES.md`
+- `06-quality-assurance/GESTURE_AND_CAPABILITY_TEST_PLAN.md`
+- `06-quality-assurance/MASTER_TEST_STRATEGY.md`
+- `06-quality-assurance/MEDIA_AND_AUDIO_TEST_PLAN.md`
+- `06-quality-assurance/PERFORMANCE_TEST_PLAN.md`
+- `06-quality-assurance/RELEASE_CHECKLIST.md`
+- `06-quality-assurance/SECURITY_PRIVACY_TEST_PLAN.md`
+- `06-quality-assurance/UAT_PLAN_AND_SIGNOFF.md`
+- `07-content-media/ALT_TEXT_CAPTION_AND_TRANSCRIPT_GUIDE.md`
+- `07-content-media/ASSET_NAMING_AND_ORGANIZATION.md`
+- `07-content-media/CONTENT_INVENTORY_AND_GAP_ANALYSIS.md`
+- `07-content-media/KNOWN_ASSET_FILENAMES.md`
+- `07-content-media/LOVE_LETTER_CONTENT_BRIEF.md`
+- `07-content-media/MEDIA_INTAKE_AND_APPROVAL_GUIDE.md`
+- `07-content-media/MEMORY_REASON_DREAM_WORKSHEET.md`
+- `07-content-media/MUSIC_SELECTION_AND_RIGHTS_BRIEF.md`
+- `08-templates/.env.example`
+- `08-templates/agent-task.example.yaml`
+- `08-templates/content-approval-matrix.csv`
+- `08-templates/content-config.example.json`
+- `08-templates/content-schema.json`
+- `08-templates/feature-flags.example.json`
+- `08-templates/media-inventory.csv`
+- `08-templates/music-cues.csv`
+- `08-templates/project-control-workbook.xlsx`
+- `08-templates/quiz-content.csv`
+- `08-templates/requirements-traceability.csv`
+- `08-templates/risk-register.csv`
+- `08-templates/uat-evidence.csv`
+- `09-starter-blueprint/.github/ISSUE_TEMPLATE/agent-task.yml`
+- `09-starter-blueprint/.github/pull_request_template.md`
+- `09-starter-blueprint/.github/workflows/ci.yml`
+- `09-starter-blueprint/.gitignore.example`
+- `09-starter-blueprint/README.md`
+- `09-starter-blueprint/app/.gitkeep`
+- `09-starter-blueprint/next.config.example.ts`
+- `09-starter-blueprint/package.example.json`
+- `09-starter-blueprint/public/audio/.gitkeep`
+- `09-starter-blueprint/public/illustrations/.gitkeep`
+- `09-starter-blueprint/public/music/.gitkeep`
+- `09-starter-blueprint/public/photos/.gitkeep`
+- `09-starter-blueprint/public/videos/.gitkeep`
+- `09-starter-blueprint/src/components/.gitkeep`
+- `09-starter-blueprint/src/content/.gitkeep`
+- `09-starter-blueprint/src/lib/.gitkeep`
+- `09-starter-blueprint/src/lib/answer-normalization.ts`
+- `09-starter-blueprint/src/lib/birthday-state.ts`
+- `09-starter-blueprint/src/styles/.gitkeep`
+- `09-starter-blueprint/src/styles/tokens.css`
+- `09-starter-blueprint/src/types/.gitkeep`
+- `09-starter-blueprint/src/types/story.ts`
+- `09-starter-blueprint/tsconfig.example.json`
+- `10-legal-privacy/CONSENT_RIGHTS_AND_PRIVACY_CHECKLIST.md`
+- `10-legal-privacy/DATA_RETENTION_SCHEDULE.md`
+- `10-legal-privacy/INCIDENT_RESPONSE_MINI_RUNBOOK.md`
+- `10-legal-privacy/PRIVACY_NOTICE_TEMPLATE.md`
+- `11-client-handoff/CLIENT_HANDOFF_GUIDE.md`
+- `11-client-handoff/OPERATIONS_RUNBOOK.md`
+- `11-client-handoff/POST_LAUNCH_SUPPORT_PLAN.md`
+- `11-client-handoff/RETIREMENT_AND_DELETION_RUNBOOK.md`
+- `12-references/GLOSSARY.md`
+- `12-references/OFFICIAL_TECHNICAL_REFERENCES.md`
+- `13-deliverables/DELIVERABLES_README.md`
+- `13-deliverables/MASTER_SPECIFICATION.docx`
+- `13-deliverables/MASTER_SPECIFICATION.md`
+- `13-deliverables/MASTER_SPECIFICATION.pdf`
+- `BUILD_PACK_SUMMARY.json`
+- `FILE_MANIFEST_SHA256.md`
+- `README.md`

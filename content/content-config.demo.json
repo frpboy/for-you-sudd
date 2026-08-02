@@ -1,0 +1,31 @@
+{
+  "mode": "demo", "project": { "birthday": "2026-08-08", "timezone": "Asia/Kolkata", "locale": "en-IN" },
+  "participants": { "recipient": "Friend", "nickname": "Friend", "sender": "Someone who cares" },
+  "greeting": "Happy Birthday to the most special person in my life!", "narrativeAnswer": "Switzerland",
+  "chapters": [
+    { "id": "first-message", "title": "It All Started", "date": "19 December 2025", "body": "A small beginning that became a beautiful story.", "mediaId": "demo-first" },
+    { "id": "commitment", "title": "We Became Us", "date": "26 December 2025 · 6:12 PM", "body": "A moment worth keeping close.", "mediaId": "demo-rose" },
+    { "id": "first-meet", "title": "Our First Meeting", "date": "6 January 2026 · 4:20 AM", "body": "The kind of memory that changes the meaning of a place.", "mediaId": "demo-sky" },
+    { "id": "station", "title": "A Place in Our Story", "date": "Krishnarajapuram Railway Station, Bengaluru", "body": "Every journey has one place that stays special.", "mediaId": "demo-first" }
+  ],
+  "media": [
+    { "id": "demo-first", "kind": "image", "privatePath": "demo-assets/memory-one.svg", "alt": "Abstract green and beige memory artwork", "caption": "A little beginning", "approval": "demo", "width": 1080, "height": 1350 },
+    { "id": "demo-rose", "kind": "image", "privatePath": "demo-assets/memory-two.svg", "alt": "Abstract warm memory artwork", "caption": "A gentle reminder", "approval": "demo", "width": 1080, "height": 1350 },
+    { "id": "demo-sky", "kind": "image", "privatePath": "demo-assets/memory-three.svg", "alt": "Abstract blue and green memory artwork", "caption": "A shared horizon", "approval": "demo", "width": 1080, "height": 1350 }
+  ],
+  "albums": [{ "id": "demo-album", "title": "A Few Happy Moments", "mediaIds": ["demo-first", "demo-rose", "demo-sky"] }],
+  "videos": [], "voice": { "title": "A voice message will appear here when approved." },
+  "quiz": [
+    { "id": "dream", "question": "What is our dream destination?", "acceptedAnswers": ["Switzerland"], "hint": "Think of mountains and snowy views." },
+    { "id": "demo-one", "question": "Which word best describes this story?", "acceptedAnswers": ["special"], "hint": "It is in the greeting." },
+    { "id": "demo-two", "question": "What should a birthday always include?", "acceptedAnswers": ["love"], "hint": "It makes every wish warmer." },
+    { "id": "demo-three", "question": "What makes a memory matter?", "acceptedAnswers": ["together"], "hint": "The best ones are shared." },
+    { "id": "demo-four", "question": "What is worth celebrating today?", "acceptedAnswers": ["you"], "hint": "This is your day." }
+  ],
+  "memories": ["A small moment can become a favourite memory.", "Every chapter is better when it is shared."],
+  "reasons": ["The way you make ordinary days feel lighter.", "The laughter that stays with me."],
+  "dreams": ["Switzerland, one day — together."],
+  "letter": { "body": "This demo letter proves the reading experience. Replace it with the approved private letter before production.", "signature": "With care" },
+  "finale": "Today is for you. Happy Birthday.", "features": { "memoryJar": true, "reasons": true, "dreams": true, "cake": true, "confetti": true, "secretMemories": false },
+  "privacy": { "approvedForProduction": false }
+}

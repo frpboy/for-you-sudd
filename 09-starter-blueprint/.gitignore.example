@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.env*
+!.env.example
+private-content/
+private-media/
+public/photos/
+public/videos/
+public/audio/
+public/music/
+*.original.*
+*.transfer.*
+.DS_Store

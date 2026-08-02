@@ -1,0 +1,20 @@
+task_id: FEAT-005
+title: Implement relationship quiz
+owner_role: feature-agent
+requirement_ids: [FR-010, FR-011, NFR-002, NFR-003, NFR-008]
+depends_on: [ARCH-001, ARCH-002, UX-001]
+owned_files:
+  - src/features/quiz/**
+  - tests/unit/quiz/**
+  - tests/e2e/quiz.spec.ts
+non_goals:
+  - changing access control
+  - editing approved quiz content
+  - adding animation dependencies
+privacy_class: synthetic-fixtures-only
+acceptance:
+  - one question per view
+  - answer normalization tested
+  - retry and hint behavior tested
+  - complete with keyboard and touch
+  - reduced-motion behavior verified

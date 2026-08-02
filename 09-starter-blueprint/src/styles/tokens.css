@@ -1,0 +1,23 @@
+:root {
+  --color-canvas: #f8f4ec;
+  --color-surface: #f3ebdd;
+  --color-primary: #a8c7a0;
+  --color-primary-strong: #5b7553;
+  --color-accent: #dfc8a8;
+  --color-text: #2e2e2e;
+  --color-text-muted: #6e6a65;
+  --radius-card: 24px;
+  --shadow-card: 0 18px 55px rgb(46 46 46 / 0.10);
+  --duration-fast: 160ms;
+  --duration-standard: 280ms;
+  --duration-narrative: 520ms;
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-standard: 1ms;
+    --duration-narrative: 1ms;
+  }
+}

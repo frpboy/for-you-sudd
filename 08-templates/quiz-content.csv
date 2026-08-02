@@ -1,0 +1,6 @@
+question_id,order,input_type,prompt,accepted_answers_pipe_separated,options_pipe_separated,hint,success_copy,retry_copy,required,approval_status
+committed-date,1,date,When did we become officially committed?,2025-12-26,,,Exactly.,Almost. Try again.,True,client-review
+first-meet-date,2,date,When did we first meet?,2026-01-06,,,You remember.,Not quite. Try once more.,True,client-review
+dream-destination,3,text,What is our dream destination?,Switzerland,,,Switzerland.,Think of the place we dream about.,True,client-review
+first-message-date,4,date,When was our first message?,2025-12-19,,,That is where it began.,Try the date our story started.,True,client-review
+favourite-together-moment,5,single-choice,Which moment do I love the most?,Spending time together after fights,Cooking|Watching movies|Travelling|Spending time together after fights,,"Even after every fight, being with you feels like home.",Try again.,True,client-review

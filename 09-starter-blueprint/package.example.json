@@ -1,0 +1,44 @@
+{
+  "name": "our-story-birthday-experience",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run validate:content && next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "validate:content": "tsx scripts/validate-content.ts",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "next": "16.2.11",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "motion": "12.42.1",
+    "zod": "^4.0.0",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@tailwindcss/postcss": "4.3.0",
+    "@testing-library/react": "latest",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "latest",
+    "eslint-config-next": "16.2.11",
+    "tailwindcss": "4.3.0",
+    "tsx": "latest",
+    "typescript": "^5.9.0",
+    "vitest": "latest",
+    "axe-core": "latest"
+  },
+  "_note": "Reference only. Resolve and pin all latest placeholders to current patched versions and commit a lockfile before implementation."
+}

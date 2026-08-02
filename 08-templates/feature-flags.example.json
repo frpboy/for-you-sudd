@@ -1,0 +1,11 @@
+{
+  "enableMemoryJar": false,
+  "enableReasons": false,
+  "enableFutureDreams": true,
+  "enableTapCake": true,
+  "enableMicrophoneCandle": false,
+  "enableShakeGift": false,
+  "enableVibration": false,
+  "enableSecretGallery": false,
+  "enableMultiTrackMusic": false
+}

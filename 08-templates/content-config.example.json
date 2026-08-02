@@ -1,0 +1,206 @@
+{
+  "project": {
+    "id": "our-story-birthday-2026",
+    "title": "Our Story",
+    "birthdayAt": "2026-08-08T00:00:00+05:30",
+    "timezone": "Asia/Kolkata",
+    "locale": "en-IN"
+  },
+  "participants": [
+    {
+      "id": "recipient",
+      "role": "recipient",
+      "displayName": "{{RECIPIENT_NAME}}",
+      "nickname": "{{RECIPIENT_NICKNAME}}",
+      "signature": "",
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "sender",
+      "role": "sender",
+      "displayName": "{{SENDER_NAME}}",
+      "nickname": "{{SENDER_NICKNAME}}",
+      "signature": "{{SENDER_SIGNATURE}}",
+      "approvalStatus": "draft"
+    }
+  ],
+  "access": {
+    "mode": "combined",
+    "narrativeQuestion": "What is our dream destination?",
+    "acceptedNarrativeAnswers": [
+      "Switzerland"
+    ]
+  },
+  "chapters": [
+    {
+      "id": "first-message",
+      "order": 1,
+      "title": "It All Started",
+      "date": "2025-12-19",
+      "body": "The first message that changed everything.",
+      "mediaIds": [],
+      "approvalStatus": "client-review"
+    },
+    {
+      "id": "committed",
+      "order": 2,
+      "title": "We Became Us",
+      "date": "2025-12-26",
+      "time": "18:12",
+      "body": "{{APPROVED_COMMITMENT_COPY}}",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "first-meet",
+      "order": 3,
+      "title": "Our First Meeting",
+      "date": "2026-01-06",
+      "time": "04:20",
+      "body": "{{APPROVED_FIRST_MEET_COPY}}",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "station",
+      "order": 4,
+      "title": "A Place in Our Story",
+      "location": "Krishnarajapuram Railway Station, Bengaluru",
+      "body": "{{APPROVED_LOCATION_COPY}}",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    }
+  ],
+  "albums": [
+    {
+      "id": "first-meet",
+      "title": "First Meet",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "bangalore",
+      "title": "Bengaluru",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "selfies",
+      "title": "Our Selfies",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    },
+    {
+      "id": "favourites",
+      "title": "Favourite Photos",
+      "mediaIds": [],
+      "approvalStatus": "draft"
+    }
+  ],
+  "media": [],
+  "quiz": [
+    {
+      "id": "committed-date",
+      "order": 1,
+      "inputType": "date",
+      "prompt": "When did we become officially committed?",
+      "acceptedAnswers": [
+        "2025-12-26"
+      ],
+      "successCopy": "Exactly.",
+      "retryCopy": "Almost. Try again.",
+      "required": true
+    },
+    {
+      "id": "first-meet-date",
+      "order": 2,
+      "inputType": "date",
+      "prompt": "When did we first meet?",
+      "acceptedAnswers": [
+        "2026-01-06"
+      ],
+      "successCopy": "You remember.",
+      "retryCopy": "Not quite. Try once more.",
+      "required": true
+    },
+    {
+      "id": "dream-destination",
+      "order": 3,
+      "inputType": "text",
+      "prompt": "What is our dream destination?",
+      "acceptedAnswers": [
+        "Switzerland"
+      ],
+      "successCopy": "Switzerland.",
+      "retryCopy": "Think of the place we dream about.",
+      "required": true
+    },
+    {
+      "id": "first-message-date",
+      "order": 4,
+      "inputType": "date",
+      "prompt": "When was our first message?",
+      "acceptedAnswers": [
+        "2025-12-19"
+      ],
+      "successCopy": "That is where it began.",
+      "retryCopy": "Try the date our story started.",
+      "required": true
+    },
+    {
+      "id": "favourite-together-moment",
+      "order": 5,
+      "inputType": "single-choice",
+      "prompt": "Which moment do I love the most?",
+      "acceptedAnswers": [
+        "Spending time together after fights"
+      ],
+      "options": [
+        "Cooking",
+        "Watching movies",
+        "Travelling",
+        "Spending time together after fights"
+      ],
+      "successCopy": "Even after every fight, being with you feels like home.",
+      "retryCopy": "Try again.",
+      "required": true
+    }
+  ],
+  "memories": [],
+  "reasons": [],
+  "dreams": [
+    {
+      "id": "switzerland",
+      "text": "Switzerland",
+      "approvalStatus": "client-review"
+    }
+  ],
+  "letter": {
+    "salutation": "Dear {{RECIPIENT_NAME}}",
+    "paragraphs": [
+      "{{APPROVED_LETTER_PARAGRAPH_1}}"
+    ],
+    "signature": "{{SENDER_SIGNATURE}}",
+    "approvalStatus": "draft"
+  },
+  "music": [],
+  "finale": {
+    "headline": "Happy Birthday, {{RECIPIENT_NAME}}",
+    "body": "{{APPROVED_FINALE_MESSAGE}}",
+    "approvalStatus": "draft"
+  },
+  "featureFlags": {
+    "enableMemoryJar": false,
+    "enableReasons": false,
+    "enableFutureDreams": true,
+    "enableMicrophoneCandle": false,
+    "enableShakeGift": false,
+    "enableVibration": false,
+    "enableSecretGallery": false
+  },
+  "privacy": {
+    "allowIndexing": false,
+    "allowPublicSharing": false,
+    "retireAfter": "2026-09-08T23:59:59+05:30"
+  }
+}

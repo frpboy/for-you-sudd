@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/our-story-content.schema.json",
+  "title": "Our Story Content Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "participants",
+    "access",
+    "chapters",
+    "albums",
+    "media",
+    "quiz",
+    "letter",
+    "music",
+    "finale",
+    "privacy"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "birthdayAt",
+        "timezone",
+        "locale"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "birthdayAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "type": "string",
+          "const": "Asia/Kolkata"
+        },
+        "locale": {
+          "type": "string",
+          "default": "en-IN"
+        }
+      }
+    },
+    "participants": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/participant"
+      }
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "narrativeQuestion",
+        "acceptedNarrativeAnswers"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "managed-protection",
+            "server-passphrase",
+            "combined"
+          ]
+        },
+        "narrativeQuestion": {
+          "type": "string"
+        },
+        "acceptedNarrativeAnswers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/chapter"
+      }
+    },
+    "albums": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/album"
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/media"
+      }
+    },
+    "quiz": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "$ref": "#/$defs/question"
+      }
+    },
+    "memories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shortEntry"
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shortEntry"
+      }
+    },
+    "dreams": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/shortEntry"
+      }
+    },
+    "letter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "salutation",
+        "paragraphs",
+        "signature",
+        "approvalStatus"
+      ],
+      "properties": {
+        "salutation": {
+          "type": "string"
+        },
+        "paragraphs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "signature": {
+          "type": "string"
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "music": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/musicCue"
+      }
+    },
+    "finale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "headline",
+        "body",
+        "approvalStatus"
+      ],
+      "properties": {
+        "headline": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "featureFlags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowIndexing",
+        "allowPublicSharing",
+        "retireAfter"
+      ],
+      "properties": {
+        "allowIndexing": {
+          "const": false
+        },
+        "allowPublicSharing": {
+          "const": false
+        },
+        "retireAfter": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "approval": {
+      "enum": [
+        "draft",
+        "client-review",
+        "approved",
+        "rejected"
+      ]
+    },
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "role",
+        "displayName",
+        "approvalStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "role": {
+          "enum": [
+            "recipient",
+            "sender"
+          ]
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "title",
+        "body",
+        "mediaIds",
+        "approvalStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        },
+        "location": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "mediaIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "album": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "mediaIds",
+        "approvalStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "mediaIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "sourceRef",
+        "caption",
+        "alt",
+        "rightsStatus",
+        "approvalStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "video",
+            "voice",
+            "music",
+            "illustration"
+          ]
+        },
+        "sourceRef": {
+          "type": "string"
+        },
+        "posterRef": {
+          "type": "string"
+        },
+        "albumId": {
+          "$ref": "#/$defs/id"
+        },
+        "caption": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "durationSeconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "objectPosition": {
+          "type": "string"
+        },
+        "sensitive": {
+          "type": "boolean"
+        },
+        "rightsStatus": {
+          "enum": [
+            "unknown",
+            "owned",
+            "licensed",
+            "royalty-free",
+            "consent-confirmed"
+          ]
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        },
+        "checksum": {
+          "type": "string"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order",
+        "inputType",
+        "prompt",
+        "acceptedAnswers",
+        "successCopy",
+        "retryCopy",
+        "required"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "inputType": {
+          "enum": [
+            "date",
+            "text",
+            "single-choice"
+          ]
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "acceptedAnswers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "successCopy": {
+          "type": "string"
+        },
+        "retryCopy": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "shortEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text",
+        "approvalStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "text": {
+          "type": "string"
+        },
+        "mediaId": {
+          "$ref": "#/$defs/id"
+        },
+        "approvalStatus": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "musicCue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetId",
+        "loop",
+        "gain",
+        "fadeInMs",
+        "fadeOutMs",
+        "rightsStatus"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "assetId": {
+          "$ref": "#/$defs/id"
+        },
+        "startSection": {
+          "$ref": "#/$defs/id"
+        },
+        "endSection": {
+          "$ref": "#/$defs/id"
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fadeInMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fadeOutMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rightsStatus": {
+          "enum": [
+            "owned",
+            "licensed",
+            "royalty-free"
+          ]
+        }
+      }
+    }
+  }
+}
