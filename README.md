@@ -15,7 +15,7 @@ Open `http://localhost:3000/access`. The demo contains no personal content.
 
 ## Private content preview
 
-The supplied local media, handwritten notes, and voice note are mapped in the ignored `content/content-config.private.json`. It is deliberately not production-approved: final captions/alt text, rights/consent, the remaining quiz content, and final approval still require review.
+The supplied private media, handwritten notes, and voice note are mapped in `content/content-config.private.json`. They are served only after access verification through `/api/media/:id`; they are never placed in `public/`. Keep the GitHub repository and Vercel project private because administrators can access build artifacts.
 
 ```powershell
 $env:CONTENT_CONFIG_PATH='content/content-config.private.json'
@@ -25,7 +25,7 @@ $env:SESSION_SECRET='use-a-long-random-secret'
 npm run dev
 ```
 
-Do not put client media in `public/`, source control, `NEXT_PUBLIC_*`, or deployment logs.
+Do not put client media in `public/`, `NEXT_PUBLIC_*`, or deployment logs.
 
 ## Checks
 
@@ -42,9 +42,8 @@ To enforce the production content gate, run `CONTENT_VALIDATION_PRODUCTION=true 
 
 ## Deploy
 
-1. Create a private repository; do not commit `content/content-config.private.json` or media.
-2. Vercel has no persistent local-media disk. Store the real media and private manifest in an authenticated storage/data provider, then configure the production provider before launch. The pushed repository deliberately deploys only safe demo content until that provider is configured.
-3. Set `ACCESS_PASSPHRASE`, `SESSION_SECRET`, `CONTENT_CONFIG_PATH`, and production media-provider credentials as server-only environment secrets.
+1. Keep the repository and Vercel project private. Private media is bundled only with the authorized Node media route and delivered through `/api/media/:id`.
+2. Set `ACCESS_PASSPHRASE`, `SESSION_SECRET`, `CONTENT_CONFIG_PATH=content/content-config.private.json`, `PRIVATE_MEDIA_ROOT=private-media`, and `MEDIA_PROVIDER=local` as server-only environment secrets.
 4. Run the full checks on a content-approved preview, including `CONTENT_VALIDATION_PRODUCTION=true`.
 5. Verify `/story` and `/api/media/<id>` while unauthenticated, then test the recipient journey on iPhone Safari and Android Chrome.
 6. Promote the preview only after the release checklist is signed. Keep the previous deployment for rollback; remove domain aliases, previews, and storage assets on the approved retention date.
