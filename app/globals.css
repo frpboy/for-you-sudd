@@ -616,7 +616,8 @@ input:focus-visible {
   gap: 26px;
 }
 .chapter-image {
-  width: min(100%, 520px);
+  width: fit-content;
+  max-width: 100%;
   align-self: center;
   border-radius: 28px;
   overflow: hidden;
@@ -625,10 +626,18 @@ input:focus-visible {
 }
 .chapter-image img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
   max-height: 68vh;
   object-fit: contain;
+}
+.chapter-image .media-image {
+  width: fit-content;
+  max-width: 100%;
+}
+.chapter-image .media-image.is-loaded {
+  background: transparent;
 }
 .photo-button img,
 .video-card img {
