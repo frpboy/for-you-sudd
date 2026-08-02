@@ -35,48 +35,6 @@
   background: #fffaf1;
   box-shadow: 0 12px 28px #2e2e2e12;
 }
-.date-picker {
-  width: min(100%, 440px);
-  padding: 14px;
-  border: 1px solid #5b75533d;
-  border-radius: 22px;
-  background: #fffaf1;
-  box-shadow: 0 12px 28px #2e2e2e12;
-}
-.date-picker-value {
-  margin: 0 0 12px;
-  color: var(--deep);
-  font-size: 0.88rem;
-  font-weight: 700;
-  text-align: center;
-}
-.date-selects {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.date-selects label {
-  display: grid;
-  gap: 4px;
-  color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.date-selects select {
-  width: 100%;
-  min-height: 42px;
-  padding: 0 7px;
-  border: 1px solid #5b75535c;
-  border-radius: 11px;
-  background: #fffaf1;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.82rem;
-  text-transform: none;
-}
 .date-calendar {
   display: grid;
   gap: 9px;
@@ -88,10 +46,45 @@
   gap: 8px;
   text-align: center;
 }
-.date-calendar-header strong {
+.date-calendar-title {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.date-calendar-title button,
+.date-choice-grid button {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.date-calendar-title button:first-child {
   font-family: Georgia, serif;
   font-size: 1.04rem;
   font-weight: 500;
+}
+.date-calendar-title button:last-child {
+  color: var(--deep);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.date-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.date-choice-grid button {
+  min-height: 44px;
+  border-radius: 12px;
+  background: #f3ebdd;
+  font-weight: 600;
+}
+.date-choice-grid button[aria-pressed="true"] {
+  background: var(--deep);
+  color: #fff;
+}
+.date-year-grid {
+  grid-template-columns: repeat(4, 1fr);
 }
 .date-weekdays,
 .date-days {

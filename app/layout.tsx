@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.SITE_URL ?? "https://for-you-sudd.vercel.app"),
   title: "for u, sudd",
   description: "A private experience.",
   robots: { index: false, follow: false, nocache: true },

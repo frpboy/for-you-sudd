@@ -606,19 +606,15 @@ function DatePicker({
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [pickerView, setPickerView] = useState<"days" | "months" | "years">("days");
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   const start = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const leading = start.getDay();
-  const label = month.toLocaleDateString("en-IN", {
-    month: "long",
-    year: "numeric",
-  });
   const dateValue = (day: number) =>
     `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const selectedDay = value ? Number(value.slice(-2)) : 0;
   const selected = value
     ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
         day: "numeric",
@@ -626,8 +622,6 @@ function DatePicker({
         year: "numeric",
       })
     : "No date selected";
-  const updateMonth = (nextMonth: number, nextYear = month.getFullYear()) =>
-    setMonth(new Date(nextYear, nextMonth, 1));
   const selectDate = (nextValue: string) => {
     onChange(nextValue);
     setOpen(false);
@@ -638,68 +632,16 @@ function DatePicker({
         type="button"
         className="date-picker-trigger"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          setOpen((current) => !current);
+          setPickerView("days");
+        }}
       >
         <span>{selected}</span>
         <span aria-hidden="true">⌄</span>
       </button>
       {open && (
         <div className="date-picker-panel">
-          <div className="date-selects">
-            <label>
-              Month
-              <select
-                aria-label="Select month"
-                value={month.getMonth()}
-                onChange={(event) => updateMonth(Number(event.target.value))}
-              >
-                {Array.from({ length: 12 }, (_, index) => (
-                  <option value={index} key={index}>
-                    {new Date(2026, index, 1).toLocaleDateString("en-IN", {
-                      month: "long",
-                    })}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Day
-              <select
-                aria-label="Select day"
-                value={selectedDay}
-                onChange={(event) => {
-                  const day = Number(event.target.value);
-                  if (day) selectDate(dateValue(day));
-                }}
-              >
-                <option value={0}>Day</option>
-                {Array.from({ length: days }, (_, index) => (
-                  <option value={index + 1} key={index + 1}>
-                    {index + 1}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Year
-              <select
-                aria-label="Select year"
-                value={month.getFullYear()}
-                onChange={(event) =>
-                  updateMonth(month.getMonth(), Number(event.target.value))
-                }
-              >
-                {Array.from({ length: 13 }, (_, index) => {
-                  const year = 2020 + index;
-                  return (
-                    <option value={year} key={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
-          </div>
           <div className="date-calendar">
             <div className="date-calendar-header">
               <button
@@ -719,7 +661,10 @@ function DatePicker({
               >
                 <ArrowLeft size={18} />
               </button>
-              <strong aria-live="polite">{label}</strong>
+              <div className="date-calendar-title" aria-live="polite">
+                <button type="button" aria-label="Choose month" onClick={() => setPickerView("months")}>{month.toLocaleDateString("en-IN", { month: "long" })}</button>
+                <button type="button" aria-label="Choose year" onClick={() => setPickerView("years")}>{month.getFullYear()}</button>
+              </div>
               <button
                 type="button"
                 className="icon-button"
@@ -738,7 +683,15 @@ function DatePicker({
                 <ArrowRight size={18} />
               </button>
             </div>
-            <div className="date-weekdays" aria-hidden="true">
+            {pickerView === "months" && <div className="date-choice-grid">{Array.from({ length: 12 }, (_, index) => {
+              const name = new Date(2026, index, 1).toLocaleDateString("en-IN", { month: "long" });
+              return <button type="button" key={name} aria-pressed={month.getMonth() === index} onClick={() => { setMonth(new Date(month.getFullYear(), index, 1)); setPickerView("days"); }}>{name}</button>;
+            })}</div>}
+            {pickerView === "years" && <div className="date-choice-grid date-year-grid">{Array.from({ length: 13 }, (_, index) => {
+              const year = 2020 + index;
+              return <button type="button" key={year} aria-pressed={month.getFullYear() === year} onClick={() => { setMonth(new Date(year, month.getMonth(), 1)); setPickerView("days"); }}>{year}</button>;
+            })}</div>}
+            {pickerView === "days" && <><div className="date-weekdays" aria-hidden="true">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                 <span key={day}>{day}</span>
               ))}
@@ -770,7 +723,7 @@ function DatePicker({
                   </button>
                 );
               })}
-            </div>
+            </div></>}
           </div>
         </div>
       )}

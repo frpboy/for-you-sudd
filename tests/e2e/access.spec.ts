@@ -107,9 +107,11 @@ test("keeps the quiz on the current question until its date is correct", async (
     }),
   ).toBeVisible();
   await page.locator(".date-picker-trigger").click();
-  await page.getByLabel("Select month").selectOption("11");
-  await page.getByLabel("Select year").selectOption("2025");
-  await page.getByLabel("Select day").selectOption("26");
+  await page.getByRole("button", { name: "Choose month" }).click();
+  await page.getByRole("button", { name: "December", exact: true }).click();
+  await page.getByRole("button", { name: "Choose year" }).click();
+  await page.getByRole("button", { name: "2025", exact: true }).click();
+  await page.getByRole("button", { name: "Select 26 December 2025" }).click();
   await page.getByRole("button", { name: /^continue/i }).click();
   await expect(
     page.getByRole("button", { name: /next question/i }),
