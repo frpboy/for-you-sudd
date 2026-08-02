@@ -40,6 +40,7 @@ export function AccessGate() {
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
     }
+    localStorage.removeItem("for-u-sudd-progress");
     router.replace("/story");
   }
   return (

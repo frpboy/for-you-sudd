@@ -30,6 +30,11 @@ async function answerDate(
 test("protects the story and allows the private flow", async ({ page }) => {
   await enterStory(page);
 });
+test("starts at the opening after access even with stale story progress", async ({ page }) => {
+  await page.goto("/access");
+  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
+  await enterStory(page);
+});
 test("does not disclose media to unauthenticated requests", async ({
   request,
 }) => {
