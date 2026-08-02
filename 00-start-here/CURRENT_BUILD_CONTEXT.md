@@ -6,7 +6,7 @@
 ## Confirmed identity and access
 
 - Recipient: **Dhilsha K J**; nickname: **Sudd**.
-- Sender: **Mohammed Rashid KS**.
+- Sender display name: **Rashimma**.
 - Product/domain label: **For U Sudd**. The final registered hostname is still to be chosen before deployment.
 - Access: a private passphrase has been provided by the owner. Store it only as a server-side deployment secret; it must not be copied into source, content files, documentation, or client JavaScript.
 

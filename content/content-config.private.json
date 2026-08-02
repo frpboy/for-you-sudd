@@ -1,6 +1,6 @@
 {
   "mode": "private", "project": { "birthday": "2026-08-08", "timezone": "Asia/Kolkata", "locale": "en-IN" },
-  "participants": { "recipient": "Dhilsha K J", "nickname": "Sudd", "sender": "Mohammed Rashid KS" },
+  "participants": { "recipient": "Dhilsha K J", "nickname": "Sudd", "sender": "Rashimma" },
   "greeting": "Happy Birthday to the most special person in my life!", "narrativeAnswer": "Switzerland",
   "chapters": [
     { "id": "first-message", "title": "It All Started", "date": "19 December 2025", "body": "The beginning of our story.", "mediaId": "photo-first" },
@@ -37,7 +37,7 @@
     { "id":"video-moon","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.10 PM.mp4","alt":"Short filtered portrait video","caption":"A moonlit moment","approval":"pending","durationSeconds":2,"posterId":"photo-last" },
     { "id":"video-final","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.25 PM.mp4","alt":"Short shared portrait video","caption":"A final little smile","approval":"pending","durationSeconds":1,"posterId":"photo-sky" },
     { "id":"music-selected","kind":"audio","privatePath":"Sun Raha Hai Na Tu (SlowedReverb)#song #shorts.mp4","alt":"Selected background track","caption":"Background music","approval":"pending" },
-    { "id":"voice-birthday","kind":"audio","privatePath":"WhatsApp Audio 2026-08-02 at 3.01.16 PM.mp4","alt":"A private birthday voice note","caption":"A voice message from Mohammed","approval":"pending" },
+    { "id":"voice-birthday","kind":"audio","privatePath":"voice-note.m4a","alt":"A private birthday voice note","caption":"A voice message from Mohammed","approval":"pending" },
     { "id":"note-universe","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.21.12 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"In every universe","approval":"pending","rotation":180 },
     { "id":"note-heart","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.15.44 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"A prettier heart","approval":"pending" },
     { "id":"note-only-you","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.11.29 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Only you","approval":"pending","rotation":180 },
@@ -53,6 +53,6 @@
   "voice":{"title":"A voice message from Mohammed.","mediaId":"voice-birthday"},
   "quiz":[{"id":"dream","question":"What is our dream destination?","acceptedAnswers":["Switzerland"],"hint":"Think of mountains and snow."}],
   "memories":[],"reasons":[],"dreams":["Switzerland."],
-  "letter":{"body":"Some things are better kept in your own handwriting.","signature":"Mohammed Rashid KS","mediaIds":["note-universe","note-heart","note-only-you","note-rare","note-prettiest"]},"secretMediaIds":["photo-last","photo-moon","photo-filter"],"finale":"Happy Birthday, Sudd.","musicMediaId":"music-selected",
+  "letter":{"body":"Some things are better kept in your own handwriting.","signature":"Rashimma","mediaIds":["note-universe","note-heart","note-only-you","note-rare","note-prettiest"]},"secretMediaIds":["photo-last","photo-moon","photo-filter"],"finale":"Happy Birthday, Sudd.","musicMediaId":"music-selected",
   "features":{"memoryJar":false,"reasons":false,"dreams":true,"cake":true,"confetti":true,"secretMemories":true},"privacy":{"approvedForProduction":false}
 }
