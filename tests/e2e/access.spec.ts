@@ -41,6 +41,7 @@ test("loads every private photo through the protected route", async ({
     "photo-city",
     "photo-flower",
     "photo-daylight",
+    "station-krishnarajapuram",
     "photo-garden",
     "photo-green",
     "photo-peace",
@@ -55,6 +56,7 @@ test("loads every private photo through the protected route", async ({
     "note-only-you",
     "note-rare",
     "note-prettiest",
+    "note-choose-you",
   ];
   const results = await page.evaluate(
     async (ids) =>

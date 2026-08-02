@@ -6,7 +6,7 @@
     { "id": "first-message", "title": "It All Started", "date": "19 December 2025", "body": "The beginning of our story.", "mediaId": "photo-first" },
     { "id": "commitment", "title": "We Became Us", "date": "26 December 2025 · 6:12 PM", "body": "A day that became ours.", "mediaId": "photo-rose" },
     { "id": "first-meet", "title": "Our First Meeting", "date": "6 January 2026 · 4:20 AM", "body": "A moment we will always remember.", "mediaId": "photo-hands" },
-    { "id": "station", "title": "A Place in Our Story", "date": "Krishnarajapuram Railway Station, Bengaluru", "body": "A place that will always be special to us.", "mediaId": "photo-daylight" }
+    { "id": "station", "title": "A Place in Our Story", "date": "Krishnarajapuram Railway Station, Bengaluru", "body": "A place that will always be special to us.", "mediaId": "station-krishnarajapuram" }
   ],
   "media": [
     { "id":"photo-first","kind":"image","privatePath":"IMG_5854.JPG.jpeg","alt":"Shared night-time photo","caption":"The first picture","approval":"pending" },
@@ -23,6 +23,7 @@
     { "id":"photo-city","kind":"image","privatePath":"IMG_7024.JPG.jpeg","alt":"Shared outdoor portrait","caption":"Out and about","approval":"pending" },
     { "id":"photo-flower","kind":"image","privatePath":"IMG_7034.JPG.jpeg","alt":"Shared daytime portrait","caption":"A sunny day","approval":"pending" },
     { "id":"photo-daylight","kind":"image","privatePath":"IMG_7039.JPG.jpeg","alt":"Shared daylight portrait","caption":"Just us","approval":"pending" },
+    { "id":"station-krishnarajapuram","kind":"image","privatePath":"krishnarajapuram-station.jpg","alt":"The Krishnarajapuram railway station sign on the platform in Bengaluru","caption":"Krishnarajapuram Railway Station","approval":"pending" },
     { "id":"photo-garden","kind":"image","privatePath":"IMG_7059.JPG.jpeg","alt":"Shared outdoor portrait","caption":"Together","approval":"pending" },
     { "id":"photo-green","kind":"image","privatePath":"IMG_7062.JPG.jpeg","alt":"Shared portrait in green","caption":"A soft smile","approval":"pending" },
     { "id":"photo-peace","kind":"image","privatePath":"IMG_7154.JPG.jpeg","alt":"Shared peace-sign portrait","caption":"A little joy","approval":"pending" },
