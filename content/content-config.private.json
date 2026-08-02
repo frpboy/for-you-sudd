@@ -50,7 +50,7 @@
     { "id":"favourites","title":"Favourite Photos","mediaIds":["photo-city","photo-flower","photo-daylight","photo-garden","photo-green","photo-peace","photo-outdoor","photo-tree","photo-moon","photo-glasses","photo-filter","photo-last"] }
   ],
   "videos":[{"id":"ride","title":"A little ride","mediaId":"video-scooter"},{"id":"drive","title":"A little drive","mediaId":"video-car"},{"id":"moon","title":"A moonlit moment","mediaId":"video-moon"},{"id":"closing","title":"One last smile","mediaId":"video-final"}],
-  "voice":{"title":"A voice message from Mohammed.","mediaId":"voice-birthday"},
+  "voice":{"title":"A voice message from Rashi.","mediaId":"voice-birthday"},
   "quiz":[
     {"id":"commitment-date","question":"When did we become officially committed?","acceptedAnswers":["2025-12-26","26 December 2025","26/12/2025"],"hint":"Think of our December commitment."},
     {"id":"first-meet-date","question":"When did we first meet?","acceptedAnswers":["2026-01-06","6 January 2026","06/01/2026"],"hint":"Think of that early January morning."},
