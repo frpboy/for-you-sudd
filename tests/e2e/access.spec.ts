@@ -13,6 +13,20 @@ async function enterStory(page: import("@playwright/test").Page) {
     page.getByRole("heading", { name: /ready when you are/i }),
   ).toBeVisible();
 }
+async function answerDate(
+  page: import("@playwright/test").Page,
+  month: string,
+  year: string,
+  date: string,
+) {
+  await page.locator(".date-picker-trigger").click();
+  await page.getByRole("button", { name: "Choose month" }).click();
+  await page.getByRole("button", { name: month, exact: true }).click();
+  await page.getByRole("button", { name: "Choose year" }).click();
+  await page.getByRole("button", { name: year, exact: true }).click();
+  await page.getByRole("button", { name: `Select ${date}` }).click();
+  await page.getByRole("button", { name: /^continue/i }).click();
+}
 test("protects the story and allows the private flow", async ({ page }) => {
   await enterStory(page);
 });
@@ -116,4 +130,23 @@ test("keeps the quiz on the current question until its date is correct", async (
   await expect(
     page.getByRole("button", { name: /next question/i }),
   ).toBeVisible();
+});
+test("shows and selects the favourite-moment radio option", async ({ page }) => {
+  await enterStory(page);
+  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
+  await page.reload();
+  await answerDate(page, "December", "2025", "26 December 2025");
+  await page.getByRole("button", { name: /next question/i }).click();
+  await answerDate(page, "January", "2026", "6 January 2026");
+  await page.getByRole("button", { name: /next question/i }).click();
+  await page.getByLabel("Your answer").fill("Switzerland");
+  await page.getByRole("button", { name: /^continue/i }).click();
+  await page.getByRole("button", { name: /next question/i }).click();
+  await answerDate(page, "December", "2025", "19 December 2025");
+  await page.getByRole("button", { name: /next question/i }).click();
+  const choice = page.getByRole("radio", {
+    name: "Spending time together after fights",
+  });
+  await choice.click();
+  await expect(choice).toBeChecked();
 });

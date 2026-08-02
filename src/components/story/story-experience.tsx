@@ -178,6 +178,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const musicSrc = content.musicMediaId
     ? `/api/media/${content.musicMediaId}`
     : undefined;
+  const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const pauseMusicForVoice = () => audio.current?.pause();
   const burstConfetti = () => {
     setConfetti(true);
@@ -196,6 +197,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
       }}
     >
+      {showAmbient && (
+        <div className="ambient-particles" aria-hidden="true">
+          {Array.from({ length: 7 }, (_, index) => <i key={index} />)}
+        </div>
+      )}
       {tapPulse && <span key={tapPulse.id} className="tap-pulse" aria-hidden="true" style={{ left: tapPulse.x, top: tapPulse.y }} onAnimationEnd={() => setTapPulse(null)} />}
       <audio ref={audio} src={musicSrc} loop preload="metadata" />
       {confetti && (
