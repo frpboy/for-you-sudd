@@ -49,6 +49,10 @@ To enforce the production content gate, run `CONTENT_VALIDATION_PRODUCTION=true 
 5. Verify `/story` and `/api/media/<id>` while unauthenticated, then test the recipient journey on iPhone Safari and Android Chrome.
 6. Promote the preview only after the release checklist is signed. Keep the previous deployment for rollback; remove domain aliases, previews, and storage assets on the approved retention date.
 
+### Vercel environment setup
+
+The ignored `.env.vercel` file contains the real local access secret and session secret for pasting into Vercel. This project can deploy the supplied private manifest and assets from `private-media/`: they are not in `public/`, are traced only into the authorized media function, and are served solely through `/api/media/:id`. The GitHub repository and Vercel project must remain private because their administrators can access build artifacts. For a stronger separation later, set `MEDIA_PROVIDER=remote`, `PRIVATE_MEDIA_BASE_URL`, and `PRIVATE_MEDIA_TOKEN` for an authenticated HTTPS media service; the app proxies it through the same authorized endpoint, including byte-range requests.
+
 ## Current content gaps
 
 The actual supplied photos, videos, handwritten notes, and voice note are locally mapped but remain pending approval. A rights confirmation for the selected music, final captions/alt text, five quiz questions, domain, and retention date are still required before production approval.

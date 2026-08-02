@@ -25,7 +25,7 @@
   "memories": ["A small moment can become a favourite memory.", "Every chapter is better when it is shared."],
   "reasons": ["The way you make ordinary days feel lighter.", "The laughter that stays with me."],
   "dreams": ["Switzerland, one day — together."],
-  "letter": { "body": "This demo letter proves the reading experience. Replace it with the approved private letter before production.", "signature": "With care" },
+  "letter": { "body": "This demo letter proves the reading experience. Replace it with the approved private letter before production.", "signature": "With care" }, "secretMediaIds": [],
   "finale": "Today is for you. Happy Birthday.", "features": { "memoryJar": true, "reasons": true, "dreams": true, "cake": true, "confetti": true, "secretMemories": false },
   "privacy": { "approvedForProduction": false }
 }

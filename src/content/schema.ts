@@ -31,6 +31,7 @@ export const contentSchema = z.object({
   quiz: z.array(z.object({ id: z.string(), question: z.string(), acceptedAnswers: z.array(z.string()).min(1), hint: z.string().optional() })).min(1).max(5),
   memories: z.array(z.string()), reasons: z.array(z.string()), dreams: z.array(z.string()),
   letter: z.object({ body: z.string().min(1), signature: z.string().min(1), mediaIds: z.array(z.string()).default([]) }),
+  secretMediaIds: z.array(z.string()).default([]),
   finale: z.string().min(1),
   musicMediaId: z.string().optional(),
   features: z.object({ memoryJar: z.boolean(), reasons: z.boolean(), dreams: z.boolean(), cake: z.boolean(), confetti: z.boolean(), secretMemories: z.boolean() }),

@@ -16,3 +16,15 @@ export function findPrivateMedia(id: string) {
 }
 
 export function streamMedia(path: string, start?: number, end?: number) { return createReadStream(path, start === undefined ? undefined : { start, end }); }
+
+export async function fetchRemoteMedia(id: string, range: string | null) {
+  const baseUrl = process.env.PRIVATE_MEDIA_BASE_URL;
+  if (!baseUrl) return null;
+  const media = getMedia(getContent(), id);
+  if (!media) return null;
+  const url = new URL(encodeURIComponent(media.privatePath), baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
+  const headers = new Headers(); const token = process.env.PRIVATE_MEDIA_TOKEN;
+  if (range) headers.set("Range", range); if (token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(url, { headers, redirect: "follow", cache: "no-store" });
+  return response.ok || response.status === 206 ? { response, media } : null;
+}

@@ -4,6 +4,7 @@ coverage/
 playwright-report/
 test-results/
 .env.local
+.env.vercel
 .env.production
 content/content-config.private.json
 private-media/*
@@ -11,5 +12,11 @@ private-media/*
 *.mp4
 *.jpeg
 *.tsbuildinfo
+!content/content-config.private.json
+!private-media/
+!private-media/**
 IMG_*.JPG.jpeg
 IMG_*.PNG
+!private-media/**
+
+.vercel
