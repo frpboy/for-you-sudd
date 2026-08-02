@@ -166,7 +166,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     : undefined;
   const pauseMusicForVoice = () => audio.current?.pause();
   const resumeMusicAfterVoice = () => {
-    if (!muted) void audio.current?.play().catch(() => setMuted(true));
+    if (!document.hidden && !muted)
+      void audio.current?.play().catch(() => setMuted(true));
   };
   return (
     <main className="story-shell">
@@ -543,6 +544,7 @@ function Videos({
                     preload="metadata"
                     poster={poster ? `/api/media/${poster.id}` : undefined}
                     onPlay={onForegroundPlay}
+                    onPause={onForegroundEnd}
                     onEnded={onForegroundEnd}
                   />
                   <span>{video.title}</span>
@@ -583,6 +585,7 @@ function Voice({
             controls
             preload="metadata"
             onPlay={onForegroundPlay}
+            onPause={onForegroundEnd}
             onEnded={onForegroundEnd}
           />
         </div>
