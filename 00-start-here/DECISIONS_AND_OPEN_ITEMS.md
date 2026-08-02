@@ -25,7 +25,7 @@
 | Primary Device | Mobile phone in portrait orientation | Confirmed |
 | Greeting | Happy Birthday to the most special person in my life! | Confirmed |
 | Recipient | Dhilsha K J (Sudd) | Confirmed |
-| Sender display name | Rashimma | Confirmed |
+| Sender display name | Rashi (nickname: Rashimma) | Confirmed |
 | Product/domain label | For U Sudd | Confirmed; final registered hostname pending |
 | Access policy | Private passphrase | Confirmed; value held only in deployment secret storage |
 | Received visual media | 23 photos and 4 short videos | Confirmed; see `CURRENT_BUILD_CONTEXT.md` |
@@ -49,7 +49,7 @@
 | ID | Item | Owner | Status |
 |---|---|---|---|
 | OI-01 | Recipient name, exact spelling, nickname, and preferred salutation | Client / owner | Resolved: Dhilsha K J / Sudd; final salutation can use Sudd |
-| OI-02 | Sender display name and final signature | Client / owner | Resolved: Rashimma |
+| OI-02 | Sender display name and final signature | Client / owner | Resolved: Rashi (nickname: Rashimma) |
 | OI-03 | Domain/subdomain and launch URL | Client / owner | Open: product label is For U Sudd; registered hostname is needed |
 | OI-04 | Final access policy: private link, passphrase, or managed protection | Client / owner | Resolved: private passphrase; server-side secret/session implementation required |
 | OI-05 | Final birthday letter and exact on-screen copy approvals | Client / owner | Open |

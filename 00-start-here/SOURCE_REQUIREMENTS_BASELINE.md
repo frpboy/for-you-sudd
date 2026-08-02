@@ -11,7 +11,7 @@
 ## Confirmed relationship content
 
 - Recipient: Dhilsha K J; nickname: Sudd.
-- Sender display name: Rashimma.
+- Sender display name: Rashi (client-provided nickname: Rashimma).
 - Product/domain label: For U Sudd.
 - Birthday greeting: “Happy Birthday to the most special person in my life!”
 - Birthday: 8 August 2026.
