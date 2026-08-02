@@ -3,7 +3,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { getContent, getMedia } from "@/content/loader";
 
-const types: Record<string, string> = { ".avif": "image/avif", ".jpeg": "image/jpeg", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".mp4": "video/mp4", ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg" };
+const types: Record<string, string> = { ".jpeg": "image/jpeg", ".jpg": "image/jpeg", ".png": "image/png", ".svg": "image/svg+xml", ".mp4": "video/mp4", ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg" };
 const extension = (path: string) => path.slice(path.lastIndexOf(".")).toLowerCase();
 
 export function findPrivateMedia(id: string) {
