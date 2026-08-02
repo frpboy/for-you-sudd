@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/media/[id]/route.ts": {
+      "includeFiles": "private-media/**"
+    }
+  }
+}

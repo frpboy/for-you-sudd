@@ -53,6 +53,8 @@ To enforce the production content gate, run `CONTENT_VALIDATION_PRODUCTION=true 
 
 The ignored `.env.vercel` file contains the real local access secret and session secret for pasting into Vercel. This project can deploy the supplied private manifest and assets from `private-media/`: they are not in `public/`, are traced only into the authorized media function, and are served solely through `/api/media/:id`. The GitHub repository and Vercel project must remain private because their administrators can access build artifacts. For a stronger separation later, set `MEDIA_PROVIDER=remote`, `PRIVATE_MEDIA_BASE_URL`, and `PRIVATE_MEDIA_TOKEN` for an authenticated HTTPS media service; the app proxies it through the same authorized endpoint, including byte-range requests.
 
+If Vercel logs show `ENOENT ... content-config.demo.json`, deploy the latest commit: the content manifests are now bundled into the server-only loader and `vercel.json` explicitly includes `private-media/**` in the protected media function. In Vercel, add the values from the ignored `.env.vercel` file for **Production**, then redeploy with cache disabled once.
+
 ## Current content gaps
 
 The actual supplied photos, videos, handwritten notes, and voice note are locally mapped but remain pending approval. A rights confirmation for the selected music, final captions/alt text, five quiz questions, domain, and retention date are still required before production approval.

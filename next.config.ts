@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const scriptPolicy = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  outputFileTracingIncludes: { "/api/media/[id]": ["./private-media/**/*", "./content/content-config.private.json"] },
+  outputFileTracingIncludes: { "/story": ["./content/content-config.demo.json", "./content/content-config.private.json"], "/api/media/[id]": ["./private-media/**/*", "./content/content-config.private.json", "./content/content-config.demo.json"] },
   async headers() {
     return [{
       source: "/:path*",
