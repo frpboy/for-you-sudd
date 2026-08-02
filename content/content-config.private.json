@@ -38,9 +38,9 @@
     { "id":"video-final","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.25 PM.mp4","alt":"Short shared portrait video","caption":"A final little smile","approval":"pending","durationSeconds":1,"posterId":"photo-sky" },
     { "id":"music-selected","kind":"audio","privatePath":"Sun Raha Hai Na Tu (SlowedReverb)#song #shorts.mp4","alt":"Selected background track","caption":"Background music","approval":"pending" },
     { "id":"voice-birthday","kind":"audio","privatePath":"voice-note.m4a","alt":"A private birthday voice note","caption":"A voice message from Mohammed","approval":"pending" },
-    { "id":"note-universe","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.21.12 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"In every universe","approval":"pending","rotation":180 },
+    { "id":"note-universe","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.21.12 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"In every universe","approval":"pending" },
     { "id":"note-heart","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.15.44 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"A prettier heart","approval":"pending" },
-    { "id":"note-only-you","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.11.29 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Only you","approval":"pending","rotation":180 },
+    { "id":"note-only-you","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.11.29 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Only you","approval":"pending" },
     { "id":"note-rare","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.07.49 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Rare, so love her right","approval":"pending" },
     { "id":"note-prettiest","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.01.02 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"The prettiest girl","approval":"pending" }
   ],
