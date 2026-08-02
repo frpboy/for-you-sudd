@@ -852,7 +852,8 @@ function Letter({
 }) {
   const notes = content.letter.mediaIds
     .map((id) => content.media.find((item) => item.id === id))
-    .filter((item): item is SafeContent["media"][number] => Boolean(item) && item.id !== "note-choose-you");
+    .filter((item): item is SafeContent["media"][number] => Boolean(item))
+    .filter((item) => item.id !== "note-choose-you");
   return (
     <article className="letter">
       <p className="eyebrow">a note for you</p>
