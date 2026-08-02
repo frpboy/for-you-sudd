@@ -120,6 +120,35 @@
   color: #fff;
   box-shadow: 0 5px 12px #5b75534d;
 }
+.media-image {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  background: var(--surface);
+}
+.media-image:not(.is-loaded) {
+  aspect-ratio: 4 / 3;
+}
+.media-image img {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.media-image.is-loaded img {
+  opacity: 1;
+}
+.media-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #f3ebdd 25%, #fffaf1 42%, #f3ebdd 58%);
+  background-size: 220% 100%;
+  animation: shimmer 1.1s linear infinite;
+}
+@keyframes shimmer {
+  to { background-position: -120% 0; }
+}
 .note-grid {
   grid-template-columns: 1fr !important;
   max-width: 560px;
@@ -379,6 +408,40 @@ input:focus-visible {
   padding: 15px 16px;
   color: var(--text);
 }
+.quiz-options {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 440px);
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+.quiz-options label {
+  position: relative;
+}
+.quiz-options input {
+  position: absolute;
+  opacity: 0;
+}
+.quiz-options span {
+  display: block;
+  min-height: 52px;
+  padding: 15px 18px;
+  border: 1px solid #5b75535c;
+  border-radius: 15px;
+  background: #fffaf1;
+  color: var(--text);
+  font-weight: 600;
+}
+.quiz-options input:checked + span {
+  border-color: var(--deep);
+  background: #edf3e9;
+  box-shadow: 0 0 0 2px var(--deep);
+}
+.quiz-options input:focus-visible + span {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
 .primary,
 .secondary,
 .quiet-button,
@@ -551,6 +614,12 @@ input:focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.photo-button .media-image {
+  height: 100%;
+}
+.photo-button .media-image:not(.is-loaded) {
+  aspect-ratio: auto;
 }
 .chapter h1 {
   font-size: clamp(2.7rem, 12vw, 4.6rem);

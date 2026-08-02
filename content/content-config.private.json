@@ -58,7 +58,7 @@
     {"id":"first-meet-date","question":"When did we first meet?","acceptedAnswers":["2026-01-06","6 January 2026","06/01/2026"],"hint":"Think of that early January morning."},
     {"id":"dream","question":"What is our dream destination?","acceptedAnswers":["Switzerland"],"hint":"Think of mountains and snow."},
     {"id":"first-message-date","question":"When was our first message?","acceptedAnswers":["2025-12-19","19 December 2025","19/12/2025"],"hint":"Think of where our story began."},
-    {"id":"favourite-moment","question":"Which moment do I love the most?","acceptedAnswers":["Spending time together after fights"],"hint":"It is not a place — it is choosing us."}
+    {"id":"favourite-moment","question":"Which moment do I love the most?","acceptedAnswers":["Spending time together after fights"],"choices":["A special trip","A favourite photo together","Spending time together after fights","A long conversation"],"hint":"It is not a place — it is choosing us."}
   ],
   "memories":[],"reasons":[],"dreams":["Switzerland."],
   "letter":{"body":"Some things are better kept in your own handwriting.","signature":"Rashi","mediaIds":["note-universe","note-heart","note-only-you","note-rare","note-prettiest","note-choose-you"]},"secretMediaIds":["photo-last","photo-moon","photo-filter"],"finale":"Happy Birthday, Sudd.","musicMediaId":"music-selected",

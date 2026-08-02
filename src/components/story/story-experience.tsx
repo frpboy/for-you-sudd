@@ -96,6 +96,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [confetti, setConfetti] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
   const resumeAfterFocus = useRef(false);
+  const mediaWarmed = useRef(false);
   const index = sequence.indexOf(view);
   useEffect(() => {
     localStorage.setItem("for-u-sudd-progress", view);
@@ -103,6 +104,18 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   useEffect(() => {
     localStorage.setItem("for-u-sudd-muted", String(muted));
   }, [muted]);
+  useEffect(() => {
+    if (view === "preflight" || mediaWarmed.current) return;
+    mediaWarmed.current = true;
+    const timer = window.setTimeout(() => {
+      content.media.filter((item) => item.kind === "image").forEach((item) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = `/api/media/${item.id}`;
+      });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [content.media, view]);
   useEffect(() => {
     if (!content.musicMediaId || !audio.current) return;
     audio.current.muted = muted;
@@ -165,6 +178,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     ? `/api/media/${content.musicMediaId}`
     : undefined;
   const pauseMusicForVoice = () => audio.current?.pause();
+  const burstConfetti = () => {
+    setConfetti(true);
+    setTimeout(() => setConfetti(false), 2400);
+  };
   const resumeMusicAfterVoice = () => {
     if (!document.hidden && !muted)
       void audio.current?.play().catch(() => setMuted(true));
@@ -250,6 +267,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
             <Quiz
               item={content.quiz[quiz]}
               final={quiz === content.quiz.length - 1}
+              onCorrect={burstConfetti}
               onNext={() =>
                 quiz < content.quiz.length - 1
                   ? setQuiz((value) => value + 1)
@@ -271,12 +289,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           )}
           {view === "cake" && <Cake onNext={next} />}
           {view === "gift" && (
-            <Gift
-              onOpen={() => {
-                setConfetti(true);
-                setTimeout(() => setConfetti(false), 2400);
-              }}
-            />
+            <Gift onOpen={burstConfetti} />
           )}
           {view === "ending" && (
             <Ending
@@ -733,10 +746,12 @@ function DatePicker({
 function Quiz({
   item,
   final,
+  onCorrect,
   onNext,
 }: {
   item: StoryContent["quiz"][number];
   final: boolean;
+  onCorrect: () => void;
   onNext: () => void;
 }) {
   const [answer, setAnswer] = useState("");
@@ -754,6 +769,7 @@ function Quiz({
     if (matchesAnswer(answer, item.acceptedAnswers)) {
       setAccepted(true);
       setFeedback("That is right. ✦");
+      onCorrect();
       return;
     }
     setAccepted(false);
@@ -767,6 +783,16 @@ function Quiz({
       <h1>{item.question}</h1>
       {dateQuestion ? (
         <DatePicker value={answer} onChange={updateAnswer} />
+      ) : item.choices ? (
+        <fieldset className="quiz-options">
+          <legend className="sr-only">Choose your answer</legend>
+          {item.choices.map((choice) => (
+            <label key={choice}>
+              <input type="radio" name={`quiz-${item.id}`} value={choice} checked={answer === choice} onChange={() => updateAnswer(choice)} />
+              <span>{choice}</span>
+            </label>
+          ))}
+        </fieldset>
       ) : (
         <>
           <label htmlFor={`quiz-${item.id}`} className="sr-only">
@@ -987,20 +1013,27 @@ function Empty({ title, text }: { title: string; text: string }) {
 }
 function MediaImage({ media }: { media: SafeContent["media"][number] }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   return failed ? (
     <div className="media-failure">Unable to load this memory.</div>
   ) : (
-    <img
-      data-media-id={media.id}
-      src={`/api/media/${media.id}`}
-      alt={media.alt}
-      style={
-        media.rotation
-          ? { transform: `rotate(${media.rotation}deg)` }
-          : undefined
-      }
-      onError={() => setFailed(true)}
-    />
+    <div className={`media-image${loaded ? " is-loaded" : ""}`}>
+      {!loaded && <span className="media-skeleton" aria-hidden="true" />}
+      <img
+        data-media-id={media.id}
+        src={`/api/media/${media.id}`}
+        alt={media.alt}
+        loading="lazy"
+        decoding="async"
+        style={
+          media.rotation
+            ? { transform: `rotate(${media.rotation}deg)` }
+            : undefined
+        }
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+      />
+    </div>
   );
 }
 function MediaOverlay({
