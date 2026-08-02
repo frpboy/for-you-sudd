@@ -33,6 +33,7 @@ type View =
   | "reasons"
   | "dreams"
   | "letter"
+  | "final-note"
   | "cake"
   | "gift"
   | "ending"
@@ -51,6 +52,7 @@ const labels: Record<View, string> = {
   reasons: "Reasons",
   dreams: "Dreams",
   letter: "Letter",
+  "final-note": "One last note",
   cake: "Cake",
   gift: "Gift",
   ending: "Ending",
@@ -77,6 +79,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       ...(content.features.cake ? ["cake" as const] : []),
       "gift",
       "ending",
+      "final-note",
     ],
     [content.features],
   );
@@ -242,13 +245,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           transition={{ duration: reduced ? 0.15 : 0.48 }}
         >
           {view === "preflight" && <Preflight onReady={() => go("start")} />}
-          {view === "start" && (
-            <Start
-              onBegin={() => go("welcome")}
-              muted={muted}
-              setMuted={setMuted}
-            />
-          )}
+          {view === "start" && <Start onBegin={() => { setMuted(false); go("welcome"); }} />}
           {view === "welcome" && <Welcome content={content} onNext={next} />}
           {view === "countdown" && (
             <Countdown birthday={content.project.birthday} onNext={next} />
@@ -302,6 +299,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "letter" && (
             <Letter content={content} onOpen={setMediaId} />
           )}
+          {view === "final-note" && (
+            <FinalNote content={content} onOpen={setMediaId} />
+          )}
           {view === "cake" && <Cake onNext={next} />}
           {view === "gift" && (
             <Gift onOpen={burstConfetti} />
@@ -309,6 +309,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "ending" && (
             <Ending
               content={content}
+              onNext={next}
               onSecret={() => go("secret")}
               onReplay={() => {
                 localStorage.removeItem("for-u-sudd-progress");
@@ -336,9 +337,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           >
             <ArrowLeft aria-hidden="true" /> Back
           </button>
-          <button className="primary" onClick={next}>
+          {index < sequence.length - 1 && <button className="primary" onClick={next}>
             Continue <ArrowRight aria-hidden="true" />
-          </button>
+          </button>}
         </nav>
       )}
       <AnimatePresence>
@@ -376,12 +377,8 @@ function Preflight({ onReady }: { onReady: () => void }) {
 }
 function Start({
   onBegin,
-  muted,
-  setMuted,
 }: {
   onBegin: () => void;
-  muted: boolean;
-  setMuted: (value: boolean) => void;
 }) {
   return (
     <div className="poster start">
@@ -395,17 +392,6 @@ function Start({
       <p>One small journey made from the moments that matter.</p>
       <button className="primary" onClick={onBegin}>
         Tap to begin <ArrowRight aria-hidden="true" />
-      </button>
-      <button className="quiet-button" onClick={() => setMuted(!muted)}>
-        {muted ? (
-          <>
-            <Volume2 /> Begin with music
-          </>
-        ) : (
-          <>
-            <VolumeX /> Begin quietly
-          </>
-        )}
       </button>
     </div>
   );
@@ -866,7 +852,7 @@ function Letter({
 }) {
   const notes = content.letter.mediaIds
     .map((id) => content.media.find((item) => item.id === id))
-    .filter((item): item is SafeContent["media"][number] => Boolean(item));
+    .filter((item): item is SafeContent["media"][number] => Boolean(item) && item.id !== "note-choose-you");
   return (
     <article className="letter">
       <p className="eyebrow">a note for you</p>
@@ -886,6 +872,23 @@ function Letter({
           ))}
         </div>
       )}
+      <footer>{content.letter.signature}</footer>
+    </article>
+  );
+}
+function FinalNote({ content, onOpen }: { content: SafeContent; onOpen: (id: string) => void }) {
+  const note = content.media.find((item) => item.id === "note-choose-you");
+  if (!note) return null;
+  return (
+    <article className="letter final-note">
+      <p className="eyebrow">one last note</p>
+      <h1>For you, {content.participants.nickname}.</h1>
+      <div className="note-grid" aria-label="A final handwritten note">
+        <button className="note-card" onClick={() => onOpen(note.id)}>
+          <MediaImage media={note} />
+          <span>{note.caption}</span>
+        </button>
+      </div>
       <footer>{content.letter.signature}</footer>
     </article>
   );
@@ -933,16 +936,18 @@ function Gift({ onOpen }: { onOpen: () => void }) {
         🎁
       </button>
       <h1>{open ? "A whole world of love." : "Open your gift."}</h1>
-      <p>{open ? "Happy Birthday, Sudd." : "Tap it — no shaking required."}</p>
+      <p>{open ? "happy birthday shuttmani" : "Tap it — no shaking required."}</p>
     </section>
   );
 }
 function Ending({
   content,
+  onNext,
   onReplay,
   onSecret,
 }: {
   content: SafeContent;
+  onNext: () => void;
   onReplay: () => void;
   onSecret: () => void;
 }) {
@@ -967,6 +972,9 @@ function Ending({
       <p className="eyebrow">the end, for now</p>
       <h1>{content.finale}</h1>
       <p>Thank you for being every little reason to celebrate.</p>
+      <button className="primary" onClick={onNext}>
+        One last note <ArrowRight aria-hidden="true" />
+      </button>
       <button className="secondary" onClick={onReplay}>
         <RotateCcw /> Replay our story
       </button>
