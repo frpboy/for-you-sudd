@@ -100,6 +100,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       return saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : saved || (hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : "countdown");
     })(),
   );
+  const [progressRestored, setProgressRestored] = useState(false);
   const [chapter, setChapter] = useState(0);
   const [quiz, setQuiz] = useState(0);
   const [ambientEnabled, setAmbientEnabled] = useState(() => typeof window === "undefined" || localStorage.getItem("for-u-sudd-ambient") !== "false");
@@ -133,12 +134,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const restored = saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday)
       ? "welcome"
       : saved && sequence.includes(saved) ? saved : null;
-    const timer = restored ? window.setTimeout(() => setView(restored), 0) : undefined;
-    return () => { if (timer) window.clearTimeout(timer); };
+    const timer = window.setTimeout(() => {
+      if (restored) setView(restored);
+      setProgressRestored(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [content.project.birthday, sequence]);
   useEffect(() => {
+    if (!progressRestored) return;
     localStorage.setItem("for-u-sudd-progress", view);
-  }, [view]);
+  }, [progressRestored, view]);
   useEffect(() => { localStorage.setItem("for-u-sudd-ambient", String(ambientEnabled)); }, [ambientEnabled]);
   useEffect(() => { localStorage.setItem("for-u-sudd-ambient-volume", String(ambientVolume)); }, [ambientVolume]);
   useEffect(() => {
@@ -587,7 +592,7 @@ function Chapter({
   return (
     <article className="chapter">
       <div className="chapter-image">
-        {media && <MediaImage media={media} />}
+        {media && <MediaImage media={media} priority />}
       </div>
       <div>
         <p className="eyebrow">{chapter.date}</p>
@@ -712,7 +717,7 @@ function Voice({
   );
 }
 function Voices({ content, onPlayVoice, onVoiceEnded }: { content: SafeContent; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void }) {
-  const voices = content.voices.length ? content.voices : content.voice.mediaId ? [{ id: "voice-01", title: "A Message From My Heart ♥", description: "Before we continue, I wanted you to hear this.", mediaId: content.voice.mediaId }] : [];
+  const voices = content.voices.length ? content.voices : content.voice.mediaId ? [{ id: "voice-01", title: "One More Message ♥", description: "Before we continue, I wanted you to hear this.", mediaId: content.voice.mediaId }] : [];
   return <section className="voice voices"><p className="eyebrow">before we continue…</p><h1>A few words for <em>you.</em></h1><p className="lede">I wanted you to hear a few special voices. Take your time. ♥</p>{voices.length ? voices.map((voice, index) => { const media = content.media.find((item) => item.id === voice.mediaId); return media && <VoiceCard key={voice.id} media={media} number={index + 1} title={voice.title} description={voice.description} duration={voice.duration} onPlayVoice={onPlayVoice} onVoiceEnded={onVoiceEnded} />; }) : <Empty title="More little surprises are waiting" text="Approved recordings will appear here when they are ready." />}<p className="voice-note">Some words stay with us forever. Swipe when you are ready to continue our story.</p></section>;
 }
 function VoiceCard({ media, number, title, description, duration, onPlayVoice, onVoiceEnded }: { media: SafeContent["media"][number]; number: number; title: string; description?: string; duration?: string; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void }) {
@@ -1005,7 +1010,7 @@ function FinalNote({ content, onOpen }: { content: SafeContent; onOpen: (id: str
 }
 function FinalPhoto({ content }: { content: SafeContent }) {
   const photo = content.media.find((item) => item.id === "photo-last") ?? content.media.find((item) => item.kind === "image");
-  return <section className="final-photo"><p className="eyebrow">one more look</p>{photo && <MediaImage media={photo} />}<p>Always us.</p></section>;
+  return <section className="final-photo"><p className="eyebrow">one more look</p>{photo && <MediaImage media={photo} priority />}<p>Always us.</p></section>;
 }
 function Cake({ onNext }: { onNext: () => void }) {
   const [lit, setLit] = useState(true);
@@ -1148,7 +1153,7 @@ function Empty({ title, text }: { title: string; text: string }) {
     </div>
   );
 }
-function MediaImage({ media }: { media: SafeContent["media"][number] }) {
+function MediaImage({ media, priority = false }: { media: SafeContent["media"][number]; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   return failed ? (
@@ -1160,7 +1165,7 @@ function MediaImage({ media }: { media: SafeContent["media"][number] }) {
         data-media-id={media.id}
         src={`/api/media/${media.id}`}
         alt={media.alt}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
         decoding="async"
         style={
           media.rotation
@@ -1236,7 +1241,7 @@ function MediaOverlay({
       <figure
         className="media-frame"
       >
-        <MediaImage media={media} />
+        <MediaImage media={media} priority />
         <figcaption>{media.caption}</figcaption>
       </figure>
     </motion.div>
