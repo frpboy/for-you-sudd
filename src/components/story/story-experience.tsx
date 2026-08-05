@@ -107,6 +107,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [ambientVolume, setAmbientVolume] = useState(() => typeof window === "undefined" ? 1 : Number(localStorage.getItem("for-u-sudd-ambient-volume") ?? 1));
   const [showMusicControls, setShowMusicControls] = useState(false);
   const [mediaId, setMediaId] = useState<string | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [completedAt] = useState<string | null>(() => typeof window === "undefined" ? null : localStorage.getItem("for-u-sudd-completed-at"));
+  const [showReturnPrompt, setShowReturnPrompt] = useState(() => typeof window !== "undefined" && Boolean(localStorage.getItem("for-u-sudd-completed-at")));
   const [confetti, setConfetti] = useState(false);
   const [fireworks, setFireworks] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
@@ -115,7 +118,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const storyShell = useRef<HTMLElement>(null);
   const activeVoice = useRef<HTMLAudioElement | null>(null);
   const resumeAfterFocus = useRef(false);
-  const mediaWarmed = useRef(false);
+  const resumeVoiceAfterFocus = useRef<HTMLAudioElement | null>(null);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const ignoreNextTap = useRef(false);
   const navigationLocked = useRef(false);
@@ -126,6 +129,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
     .filter((item): item is SafeContent["media"][number] => item?.kind === "image"), [content.albums, content.media]);
+  useEffect(() => {
+    const color = mediaId ? "#1B1B1B" : ["preflight", "closing"].includes(view) ? "#111111" : "#F6F0E6";
+    let theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!theme) {
+      theme = document.createElement("meta");
+      theme.name = "theme-color";
+      document.head.append(theme);
+    }
+    theme.content = color;
+  }, [mediaId, view]);
   useEffect(() => {
     if (restoredProgress.current) return;
     restoredProgress.current = true;
@@ -156,18 +169,20 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     return () => window.clearInterval(timer);
   }, [reduced]);
   useEffect(() => {
-    if (view === "preflight" || mediaWarmed.current) return;
-    mediaWarmed.current = true;
-    const timer = window.setTimeout(() => {
-      const nextImage = view === "chapters" ? content.media.find((item) => item.id === content.chapters[chapter + 1]?.mediaId) : content.media.find((item) => item.kind === "image");
-      if (nextImage?.kind === "image") {
-        const image = new Image();
-        image.decoding = "async";
-        image.src = `/api/media/${nextImage.id}`;
-      }
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [chapter, content.chapters, content.media, view]);
+    const nextView = view === "chapters" && chapter < content.chapters.length - 1
+      ? "chapters" : sequence[index + 1];
+    const nextMediaId = nextView === "chapters"
+      ? content.chapters[view === "chapters" ? chapter + 1 : 0]?.mediaId
+      : nextView === "voice" ? content.voice.mediaId
+      : nextView === "videos" ? content.videos[0]?.mediaId
+      : undefined;
+    const nextMedia = content.media.find((item) => item.id === nextMediaId);
+    if (!nextMedia) return;
+    const element = nextMedia.kind === "image" ? new Image() : document.createElement(nextMedia.kind === "video" ? "video" : "audio");
+    if (element instanceof HTMLImageElement) element.decoding = "async";
+    else element.preload = "metadata";
+    element.src = `/api/media/${nextMedia.id}`;
+  }, [chapter, content.chapters, content.media, content.videos, content.voice.mediaId, index, sequence, view]);
   const fadeAmbient = useCallback((target: number, duration = 1000, after?: () => void) => {
     const player = audio.current;
     if (!player) return;
@@ -195,12 +210,17 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       const player = audio.current;
       resumeAfterFocus.current = Boolean(player && ambientEnabled && !player.paused);
       player?.pause();
+      const voice = activeVoice.current;
+      resumeVoiceAfterFocus.current = voice && !voice.paused ? voice : null;
+      voice?.pause();
     };
     const resumeAfterInterruption = () => {
       const player = audio.current;
       if (resumeAfterFocus.current && ambientEnabled && player)
         void player.play().catch(() => undefined);
       resumeAfterFocus.current = false;
+      if (resumeVoiceAfterFocus.current) void resumeVoiceAfterFocus.current.play().catch(() => undefined);
+      resumeVoiceAfterFocus.current = null;
     };
     const visibility = () =>
       document.hidden ? pauseForInterruption() : resumeAfterInterruption();
@@ -254,6 +274,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (navigationLocked.current) return;
     navigationLocked.current = true;
     window.setTimeout(() => { navigationLocked.current = false; }, 800);
+    navigator.vibrate?.(6);
     if (direction === "next") next(); else previous();
   }
   function handleSwipeEnd(event: React.PointerEvent<HTMLElement>) {
@@ -292,13 +313,14 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (position >= 1 - edge) navigate("next");
   }
   useEffect(() => {
+    window.history.pushState({ leaveGuard: true }, "", window.location.href);
     const onPop = () => {
-      const target = window.location.hash.slice(1) as View;
-      if (sequence.includes(target)) setView(target);
+      setShowLeaveConfirm(true);
+      window.history.pushState({ leaveGuard: true }, "", window.location.href);
     };
     addEventListener("popstate", onPop);
     return () => removeEventListener("popstate", onPop);
-  }, [sequence]);
+  }, []);
   const active = content.media.find((item) => item.id === mediaId);
   const musicSrc = content.musicMediaId
     ? `/api/media/${content.musicMediaId}`
@@ -318,7 +340,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     restoreAmbient();
   }, [restoreAmbient]);
   useEffect(() => {
-    if (view === "closing") fadeAmbient(0, 1800, () => audio.current?.pause());
+    if (view !== "closing") return;
+    const completed = localStorage.getItem("for-u-sudd-completed-at") ?? new Date().toISOString();
+    localStorage.setItem("for-u-sudd-completed-at", completed);
+    fadeAmbient(0, 4500, () => audio.current?.pause());
   }, [fadeAmbient, view]);
   const burstConfetti = useCallback(() => {
     setConfetti(true);
@@ -492,6 +517,25 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           <MediaOverlay media={active} photos={galleryPhotos} onChange={setMediaId} onClose={() => setMediaId(null)} />
         )}
       </AnimatePresence>
+      {showLeaveConfirm && (
+        <div className="leave-overlay" role="dialog" aria-modal="true" aria-labelledby="leave-title">
+          <div className="leave-dialog">
+            <h2 id="leave-title">Leave this story?</h2>
+            <div><button className="secondary" onClick={() => window.location.assign("/access")}>Yes</button><button className="primary" onClick={() => setShowLeaveConfirm(false)}>Continue</button></div>
+          </div>
+        </div>
+      )}
+      {showReturnPrompt && completedAt && (
+        <div className="leave-overlay" role="dialog" aria-modal="true" aria-labelledby="return-title">
+          <div className="leave-dialog return-dialog">
+            <Heart fill="currentColor" aria-hidden="true" />
+            <h2 id="return-title">Welcome back.</h2>
+            <p>Completed on<br />{new Date(completedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}</p>
+            <small>Made with love by {content.participants.sender}.</small>
+            <div><button className="secondary" onClick={() => { setChapter(0); setQuiz(0); setView("welcome"); setShowReturnPrompt(false); }}>Replay</button><button className="primary" onClick={() => setShowReturnPrompt(false)}>Continue</button></div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -625,6 +669,17 @@ function Albums({
   );
 }
 function Videos({ content }: { content: SafeContent }) {
+  const active = useRef<HTMLVideoElement | null>(null);
+  const playVisible = useCallback((video: HTMLVideoElement, visible: boolean) => {
+    if (!visible) {
+      if (active.current === video) active.current = null;
+      video.pause();
+      return;
+    }
+    if (active.current && active.current !== video) active.current.pause();
+    active.current = video;
+    void video.play().catch(() => undefined);
+  }, []);
   return (
     <section className="collection">
       <p className="eyebrow">little moments in motion</p>
@@ -640,7 +695,7 @@ function Videos({ content }: { content: SafeContent }) {
               : undefined;
             return (
               media && (
-                <VideoCard key={video.id} media={media} poster={poster} title={video.title} />
+                <VideoCard key={video.id} media={media} poster={poster} title={video.title} onVisibilityChange={playVisible} />
               )
             );
           })}
@@ -654,7 +709,7 @@ function Videos({ content }: { content: SafeContent }) {
     </section>
   );
 }
-function VideoCard({ media, poster, title }: { media: SafeContent["media"][number]; poster?: SafeContent["media"][number]; title: string }) {
+function VideoCard({ media, poster, title, onVisibilityChange }: { media: SafeContent["media"][number]; poster?: SafeContent["media"][number]; title: string; onVisibilityChange: (video: HTMLVideoElement, visible: boolean) => void }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -665,17 +720,20 @@ function VideoCard({ media, poster, title }: { media: SafeContent["media"][numbe
       const isVisible = entry.isIntersecting && entry.intersectionRatio > 0;
       setVisible(isVisible);
       if (isVisible) setLoaded(true);
+      onVisibilityChange(video, isVisible);
     }, { threshold: 0.01 });
     observer.observe(video);
     return () => observer.disconnect();
-  }, []);
+  }, [onVisibilityChange]);
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    if (visible) void video.play().catch(() => undefined);
-    else video.pause();
-  }, [visible]);
-  return <article className="video-card"><video ref={ref} src={loaded ? `/api/media/${media.id}` : undefined} autoPlay muted loop playsInline preload="metadata" poster={loaded && poster ? `/api/media/${poster.id}` : undefined} aria-label={title} /><span>{title}</span></article>;
+    const visibility = () => onVisibilityChange(video, !document.hidden && visible);
+    document.addEventListener("visibilitychange", visibility);
+    visibility();
+    return () => document.removeEventListener("visibilitychange", visibility);
+  }, [onVisibilityChange, visible]);
+  return <article className="video-card"><video ref={ref} src={loaded ? `/api/media/${media.id}` : undefined} muted loop playsInline preload="metadata" poster={loaded && poster ? `/api/media/${poster.id}` : undefined} aria-label={title} /><span>{title}</span></article>;
 }
 function Voice({
   content,
@@ -1110,7 +1168,7 @@ function Ending({
   );
 }
 function Closing() {
-  return <section className="closing"><Heart fill="currentColor" aria-hidden="true" /><p>I&apos;ll always choose you.</p></section>;
+  return <section className="closing"><Heart fill="currentColor" aria-hidden="true" /><p>Thank you<br />for taking this little journey.</p></section>;
 }
 function SecretAlbum({
   content,
@@ -1170,6 +1228,7 @@ function MediaImage({ media, priority = false }: { media: SafeContent["media"][n
         alt={media.alt}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
+        fetchPriority={priority ? "high" : "auto"}
         style={
           media.rotation
             ? { transform: `rotate(${media.rotation}deg)` }
@@ -1194,6 +1253,10 @@ function MediaOverlay({
 }) {
   const ref = useRef<HTMLButtonElement>(null);
   const gesture = useRef<{ x: number; y: number } | null>(null);
+  const pinch = useRef<{ distance: number; scale: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const photoIndex = photos.findIndex((photo) => photo.id === media.id);
   const move = (direction: -1 | 1) => {
     const next = photos[photoIndex + direction];
@@ -1243,8 +1306,37 @@ function MediaOverlay({
       </button>
       <figure
         className="media-frame"
+        onDoubleClick={() => {
+          setScale((value) => value === 1 ? 2 : 1);
+          setPan({ x: 0, y: 0 });
+        }}
+        onPointerDown={(event) => {
+          if (scale === 1) return;
+          event.stopPropagation();
+          drag.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y };
+        }}
+        onPointerMove={(event) => {
+          if (!drag.current) return;
+          event.stopPropagation();
+          setPan({ x: drag.current.panX + event.clientX - drag.current.x, y: drag.current.panY + event.clientY - drag.current.y });
+        }}
+        onPointerUp={(event) => { if (drag.current) event.stopPropagation(); drag.current = null; }}
+        onTouchStart={(event) => {
+          if (scale > 1) event.stopPropagation();
+          if (event.touches.length !== 2) return;
+          const [first, second] = [event.touches[0], event.touches[1]];
+          pinch.current = { distance: Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY), scale };
+        }}
+        onTouchMove={(event) => {
+          if (!pinch.current || event.touches.length !== 2) return;
+          event.stopPropagation();
+          const [first, second] = [event.touches[0], event.touches[1]];
+          const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+          setScale(Math.min(3, Math.max(1, pinch.current.scale * distance / pinch.current.distance)));
+        }}
+        onTouchEnd={(event) => { if (scale > 1) event.stopPropagation(); pinch.current = null; if (scale === 1) setPan({ x: 0, y: 0 }); }}
       >
-        <MediaImage media={media} priority />
+        <div className="zoomable-media" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}><MediaImage media={media} priority /></div>
         <figcaption>{media.caption}</figcaption>
       </figure>
     </motion.div>

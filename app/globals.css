@@ -603,8 +603,8 @@ input:focus-visible {
   font-size: 0.75rem;
 }
 .story-progress { display: flex; flex: 1; gap: 3px; align-items: center; }
-.story-progress i { height: 2px; flex: 1; border-radius: 999px; background: #5b755332; }
-.story-progress i.is-active { background: var(--deep); }
+.story-progress i { height: 2px; flex: 1; border-radius: 999px; background: #5b755332; transform: scaleX(0); transform-origin: left; transition: transform 420ms ease, background-color 420ms ease; }
+.story-progress i.is-active { background: var(--deep); transform: scaleX(1); }
 .swipe-hint, .swipe-copy { margin: 0; color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
 .swipe-hint { position: fixed; z-index: 4; right: 0; bottom: calc(12px + env(safe-area-inset-bottom)); left: 0; pointer-events: none; opacity: .72; }
 .screen-tap { position: absolute; inset: 0; z-index: 0; width: 100%; border: 0; background: transparent; }
@@ -941,6 +941,10 @@ input:focus-visible {
   backdrop-filter: blur(10px);
   touch-action: pan-y;
 }
+.leave-overlay { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(20 20 20 / .52); backdrop-filter: blur(8px); }
+.leave-dialog { width: min(100%, 330px); padding: 28px; border-radius: 24px; background: #fffaf1; box-shadow: 0 24px 60px #0005; text-align: center; }
+.leave-dialog h2 { margin: 0 0 22px; font: 1.7rem Georgia, serif; }.leave-dialog div { display: flex; gap: 10px; }.leave-dialog button { flex: 1; }
+.return-dialog > svg { width: 26px; margin-bottom: 12px; color: #e89a9e; }.return-dialog h2 { margin-bottom: 8px; }.return-dialog p { margin: 0 0 10px; line-height: 1.55; }.return-dialog small { display: block; margin-bottom: 22px; color: var(--muted); }
 .media-frame {
   width: auto;
   max-width: 90vw;
@@ -967,6 +971,7 @@ input:focus-visible {
 .media-frame figcaption { margin-top: 14px; color: rgb(255 255 255 / .9); text-align: center; }
 .media-frame .media-image { width: auto; background: transparent; }
 .media-frame .media-image:not(.is-loaded) { min-width: min(70vw, 360px); min-height: 40vh; }
+.zoomable-media { touch-action: none; transition: transform 180ms ease; }
 @keyframes photo-float { from { opacity: 0; transform: scale(.95) translateY(8px); } to { opacity: 1; transform: none; } }
 .close {
   position: fixed;

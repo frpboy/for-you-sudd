@@ -35,6 +35,7 @@ export function AccessGate() {
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
     }
+    navigator.vibrate?.(12);
     localStorage.removeItem("for-u-sudd-progress");
     window.location.assign("/story");
   }
