@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoryContent } from "@/content/schema";
-import { countdownParts, getBirthdayState } from "@/lib/birthday-state";
 import { matchesAnswer } from "@/lib/answer-normalization";
+import { hasLocalBirthdayStarted } from "@/lib/birthday-state";
 
 type SafeContent = Omit<StoryContent, "media"> & {
   media: Omit<StoryContent["media"][number], "privatePath">[];
@@ -69,11 +69,12 @@ const labels: Record<View, string> = {
 
 export function StoryExperience({ content }: { content: SafeContent }) {
   const reduced = useReducedMotion();
+  const [hasBirthdayStarted, setHasBirthdayStarted] = useState(() => hasLocalBirthdayStarted(content.project.birthday));
   const sequence = useMemo<View[]>(
     () => [
       "voice",
+      ...(!hasBirthdayStarted ? ["countdown" as const] : []),
       "welcome",
-      "countdown",
       "chapters",
       "numbers",
       "albums",
@@ -91,12 +92,13 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       "ending",
       "closing",
     ],
-    [content.features],
+    [content.features, hasBirthdayStarted],
   );
   const [view, setView] = useState<View>(() =>
-    typeof window === "undefined"
-      ? "voice"
-      : (localStorage.getItem("for-u-sudd-progress") as View) || "voice",
+    typeof window === "undefined" ? "voice" : (() => {
+      const saved = localStorage.getItem("for-u-sudd-progress") as View | null;
+      return saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : saved || "voice";
+    })(),
   );
   const [chapter, setChapter] = useState(0);
   const [quiz, setQuiz] = useState(0);
@@ -112,7 +114,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const activeVoice = useRef<HTMLAudioElement | null>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const navigationLocked = useRef(false);
   const fadeFrame = useRef<number | null>(null);
   const heartCount = useRef(0);
   const index = sequence.indexOf(view);
@@ -135,14 +138,15 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (view === "preflight" || mediaWarmed.current) return;
     mediaWarmed.current = true;
     const timer = window.setTimeout(() => {
-      content.media.filter((item) => item.kind === "image").forEach((item) => {
+      const nextImage = view === "chapters" ? content.media.find((item) => item.id === content.chapters[chapter + 1]?.mediaId) : content.media.find((item) => item.kind === "image");
+      if (nextImage?.kind === "image") {
         const image = new Image();
         image.decoding = "async";
-        image.src = `/api/media/${item.id}`;
-      });
+        image.src = `/api/media/${nextImage.id}`;
+      }
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [content.media, view]);
+  }, [chapter, content.chapters, content.media, view]);
   const fadeAmbient = useCallback((target: number, duration = 1000, after?: () => void) => {
     const player = audio.current;
     if (!player) return;
@@ -174,7 +178,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const resumeAfterInterruption = () => {
       const player = audio.current;
       if (resumeAfterFocus.current && ambientEnabled && player)
-        void player.play().catch(() => setMuted(true));
+        void player.play().catch(() => undefined);
       resumeAfterFocus.current = false;
     };
     const visibility = () =>
@@ -208,14 +212,42 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const previousView = sequence[index - 1];
     if (previousView) go(previousView);
   }
+  useEffect(() => {
+    const checkBirthday = () => {
+      if (hasBirthdayStarted || !hasLocalBirthdayStarted(content.project.birthday)) return;
+      setHasBirthdayStarted(true);
+      if (view === "countdown") {
+        setView("welcome");
+        window.history.replaceState({ story: "welcome" }, "", "#welcome");
+      }
+    };
+    checkBirthday();
+    const timer = window.setInterval(checkBirthday, 1000);
+    return () => window.clearInterval(timer);
+  }, [content.project.birthday, hasBirthdayStarted, view]);
+  function navigate(direction: "next" | "previous") {
+    if (navigationLocked.current) return;
+    navigationLocked.current = true;
+    window.setTimeout(() => { navigationLocked.current = false; }, 650);
+    if (direction === "next") next(); else previous();
+  }
   function handleSwipeEnd(event: React.PointerEvent<HTMLElement>) {
     const start = swipeStart.current;
     swipeStart.current = null;
     if (!start || view === "quiz" || view === "preflight" || view === "closing") return;
     const x = event.clientX - start.x;
     const y = event.clientY - start.y;
-    if (Math.abs(x) < 56 || Math.abs(x) < Math.abs(y) * 1.4) return;
-    if (x < 0) next(); else previous();
+    const velocity = Math.abs(x) / Math.max(1, performance.now() - start.time);
+    if (Math.abs(x) < 80 && velocity < 0.45 || Math.abs(x) < Math.abs(y) * 1.35) return;
+    if (x < 0) navigate("next"); else navigate("previous");
+  }
+  function handleStoryTap(event: React.MouseEvent<HTMLElement>) {
+    if (view === "quiz" || view === "preflight" || view === "closing") return;
+    if ((event.target as HTMLElement).closest("button, input, label, audio, video, select, textarea, a")) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const position = (event.clientX - bounds.left) / bounds.width;
+    if (position <= 0.3) navigate("previous");
+    if (position >= 0.7) navigate("next");
   }
   useEffect(() => {
     const onPop = () => {
@@ -262,8 +294,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         const bounds = event.currentTarget.getBoundingClientRect();
         setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
       }}
-      onPointerDown={(event) => { swipeStart.current = { x: event.clientX, y: event.clientY }; }}
+      onClick={handleStoryTap}
+      onPointerDown={(event) => { swipeStart.current = { x: event.clientX, y: event.clientY, time: performance.now() }; event.currentTarget.setPointerCapture(event.pointerId); }}
       onPointerUp={handleSwipeEnd}
+      onPointerCancel={() => { swipeStart.current = null; }}
     >
       {showAmbient && (
         <div className="ambient-particles" aria-hidden="true">
@@ -468,41 +502,18 @@ function Countdown({
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const state = getBirthdayState(birthday, now);
-  const parts = countdownParts(birthday, now);
+  const target = new Date(`${birthday}T00:00:00`);
+  const remaining = Math.max(0, target.getTime() - now.getTime());
+  const parts = { days: Math.floor(remaining / 86400000), hours: Math.floor(remaining / 3600000) % 24, minutes: Math.floor(remaining / 60000) % 60, seconds: Math.floor(remaining / 1000) % 60 };
   return (
-    <div className="poster countdown">
-      <p className="eyebrow">the day is almost here</p>
-      {state === "before" ? (
-        <>
-          <h1>
-            Counting down
-            <br />
-            to <em>you.</em>
-          </h1>
-          <div
-            className="time-grid"
-            aria-label={`${parts.days} days, ${parts.hours} hours, ${parts.minutes} minutes and ${parts.seconds} seconds remaining`}
-          >
-            {Object.entries(parts).map(([key, value]) => (
-              <div key={key}>
-                <strong>{String(value).padStart(2, "0")}</strong>
-                <span>{key}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <h1>
-            It is your
-            <br />
-            <em>day.</em>
-          </h1>
-          <p>Let the celebration begin.</p>
-        </>
-      )}
-      <p className="swipe-copy">Your next memory is one swipe away</p>
+    <div className="poster countdown birthday-gate">
+      <p className="eyebrow">almost there…</p>
+      <h1>Your special day<br />is getting <em>closer.</em></h1>
+      <p>Every second brings us closer to celebrating you.</p>
+      <div className="time-grid" aria-label={`${parts.days} days, ${parts.hours} hours, ${parts.minutes} minutes and ${parts.seconds} seconds remaining`}>
+        {Object.entries(parts).map(([key, value]) => <div key={key}><strong>{String(value).padStart(2, "0")}</strong><span>{key}</span></div>)}
+      </div>
+      <p className="swipe-copy">The story will begin when it&apos;s time ♥</p>
     </div>
   );
 }
@@ -527,9 +538,15 @@ function Chapter({
   );
 }
 function OurNumbers({ content }: { content: SafeContent }) {
-  const [days] = useState(() => Math.max(1, Math.floor((Date.now() - new Date("2025-12-19T00:00:00+05:30").getTime()) / 86400000)));
-  const entries = [["♥", `${days} Days together`], ["✦", "18,342 Messages"], ["◌", `${content.chapters.length + content.albums.length} Memories here`], ["▷", `${content.videos.length} Videos`], ["∞", "1 Promise"], ["♥", "∞ Love"]];
-  return <section className="our-numbers"><p className="eyebrow">the little things add up</p><h1>Our <em>numbers.</em></h1><div>{entries.map(([mark, label], index) => <p key={label} style={{ animationDelay: `${index * 90}ms` }}><b>{mark}</b>{label}</p>)}</div></section>;
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(timer); }, []);
+  const elapsed = Math.max(0, now.getTime() - new Date("2025-12-26T18:12:00+05:30").getTime());
+  const days = Math.floor(elapsed / 86400000);
+  const hours = Math.floor(elapsed / 3600000) % 24;
+  const minutes = Math.floor(elapsed / 60000) % 60;
+  const seconds = Math.floor(elapsed / 1000) % 60;
+  const photos = content.media.filter((item) => item.kind === "image").length;
+  return <section className="our-numbers live-numbers"><p className="eyebrow">together since</p><h1>26 December 2025<br /><em>6:12 PM</em></h1><div className="live-duration" aria-live="polite"><p><b>♥</b><strong>{days}</strong><span>Days</span></p><p><strong>{String(hours).padStart(2, "0")}</strong><span>Hours</span></p><p><strong>{String(minutes).padStart(2, "0")}</strong><span>Minutes</span></p><p><strong>{String(seconds).padStart(2, "0")}</strong><span>Seconds</span></p></div><div className="real-counts"><p>{photos} photos kept here</p><p>{content.videos.length} video memories</p><p>∞ love</p></div></section>;
 }
 function Albums({
   content,
@@ -621,7 +638,7 @@ function Voice({
             src={`/api/media/${media.id}`}
             preload="metadata"
             onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }}
-            onPause={() => setPlaying(false)}
+            onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }}
             onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); window.setTimeout(onNext, 500); }}
           />
           <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
@@ -638,8 +655,13 @@ function Voice({
   );
 }
 function Voices({ content, onPlayVoice, onVoiceEnded }: { content: SafeContent; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void }) {
-  const voices = content.voices.length ? content.voices : content.voice.mediaId ? [{ id: "from-me", name: content.participants.sender, relationship: "From me", mediaId: content.voice.mediaId }] : [];
-  return <section className="voice voices"><p className="eyebrow">kept close</p><h1>Voices that love you <em>♥</em></h1>{voices.length ? voices.map((voice) => { const media = content.media.find((item) => item.id === voice.mediaId); return media && <article className="voice-card" key={voice.id}><span className="voice-avatar">{voice.name.slice(0, 1)}</span><div><strong>{voice.name}</strong><small>{voice.relationship}{voice.duration ? ` · ${voice.duration}` : ""}</small></div><audio src={`/api/media/${media.id}`} controls preload="metadata" onPlay={(event) => onPlayVoice(event.currentTarget)} onEnded={(event) => onVoiceEnded(event.currentTarget)} /></article>; }) : <Empty title="More voices are waiting" text="Add approved recordings here when they are ready." />}<p className="voice-note">Parents, friends, and family voices appear here as approved recordings are added.</p></section>;
+  const voices = content.voices.length ? content.voices : content.voice.mediaId ? [{ id: "voice-01", title: "A Message From My Heart ♥", description: "Before we continue, I wanted you to hear this.", mediaId: content.voice.mediaId }] : [];
+  return <section className="voice voices"><p className="eyebrow">before we continue…</p><h1>A few words for <em>you.</em></h1><p className="lede">I wanted you to hear a few special voices. Take your time. ♥</p>{voices.length ? voices.map((voice, index) => { const media = content.media.find((item) => item.id === voice.mediaId); return media && <VoiceCard key={voice.id} media={media} number={index + 1} title={voice.title} description={voice.description} duration={voice.duration} onPlayVoice={onPlayVoice} onVoiceEnded={onVoiceEnded} />; }) : <Empty title="More little surprises are waiting" text="Approved recordings will appear here when they are ready." />}<p className="voice-note">Some words stay with us forever. Swipe when you are ready to continue our story.</p></section>;
+}
+function VoiceCard({ media, number, title, description, duration, onPlayVoice, onVoiceEnded }: { media: SafeContent["media"][number]; number: number; title: string; description?: string; duration?: string; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  return <article className={`voice-card ${playing ? "is-playing" : ""}`}><audio ref={audio} src={`/api/media/${media.id}`} preload="metadata" onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }} onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }} onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }} /><span className="voice-count">Message {String(number).padStart(2, "0")} ♥</span><h2>{title}</h2>{description && <p>{description}</p>}<div className="voice-card-actions"><button className="secondary" onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }}>{playing ? "Pause" : "Play"} <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span></button>{duration && <small>{duration}</small>}</div><div className="wave card-wave" aria-hidden="true">{Array.from({ length: 22 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 35}ms` }} />)}</div></article>;
 }
 function DatePicker({
   value,

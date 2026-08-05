@@ -1,5 +1,7 @@
 export type BirthdayState = "before" | "birthday";
 export const birthdayMoment = (birthday: string) => new Date(`${birthday}T00:00:00+05:30`);
+export const localBirthdayMoment = (birthday: string) => new Date(`${birthday}T00:00:00`);
+export const hasLocalBirthdayStarted = (birthday: string, now = new Date()) => now >= localBirthdayMoment(birthday);
 export const getBirthdayState = (birthday: string, now = new Date()): BirthdayState => now < birthdayMoment(birthday) ? "before" : "birthday";
 export const countdownParts = (birthday: string, now = new Date()) => {
   const delta = Math.max(0, birthdayMoment(birthday).getTime() - now.getTime());

@@ -34,6 +34,21 @@ test("starts at the opening after access even with stale story progress", async 
   await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
   await enterStory(page);
 });
+test("navigates stories with edge taps and horizontal swipes", async ({ page }) => {
+  await enterStory(page);
+  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "welcome"));
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
+  await page.mouse.click(24, 420);
+  await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
+  await page.mouse.click(360, 420);
+  await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
+  await page.mouse.move(24, 420);
+  await page.mouse.down();
+  await page.mouse.move(170, 420, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
+});
 test("does not disclose media to unauthenticated requests", async ({
   request,
 }) => {
