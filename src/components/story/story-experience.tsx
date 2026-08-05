@@ -187,7 +187,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const player = audio.current;
     if (!player) return;
     player.volume = ambientVolume;
-    void player.play().catch(() => undefined);
+    void player.play().then(() => setAmbientEnabled(true)).catch(() => setAmbientEnabled(false));
   }, [ambientVolume]);
   useEffect(() => { if (ambientEnabled && content.musicMediaId) playAmbient(); }, [ambientEnabled, content.musicMediaId, playAmbient]);
   useEffect(() => {
@@ -386,8 +386,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           className="icon-button"
           aria-label={ambientEnabled ? "Pause ambient music" : "Play ambient music"}
           onClick={() => {
-            if (ambientEnabled) audio.current?.pause(); else playAmbient();
-            setAmbientEnabled((value) => !value);
+            if (audio.current?.paused) playAmbient();
+            else {
+              audio.current?.pause();
+              setAmbientEnabled(false);
+            }
           }}
         >
           {ambientEnabled ? <Volume2 /> : <VolumeX />}
