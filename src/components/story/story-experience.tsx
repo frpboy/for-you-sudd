@@ -131,13 +131,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     .filter((item): item is SafeContent["media"][number] => item?.kind === "image"), [content.albums, content.media]);
   useEffect(() => {
     const color = mediaId ? "#1B1B1B" : ["preflight", "closing"].includes(view) ? "#111111" : "#F6F0E6";
-    let theme = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (!theme) {
-      theme = document.createElement("meta");
-      theme.name = "theme-color";
-      document.head.append(theme);
-    }
-    theme.content = color;
+    const theme = document.getElementById("app-theme-color") as HTMLMetaElement | null;
+    if (theme) theme.content = color;
+    const colorScheme = document.getElementById("app-color-scheme") as HTMLMetaElement | null;
+    if (colorScheme) colorScheme.content = color === "#F6F0E6" ? "light" : "dark";
   }, [mediaId, view]);
   useEffect(() => {
     if (restoredProgress.current) return;

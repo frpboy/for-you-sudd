@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     images: [{ url: "/og-couple.jpg", width: 1200, height: 630, alt: "for u, sudd" }],
   },
 };
-export const viewport: Viewport = { themeColor: "#F6F0E6", colorScheme: "light" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}<Script id="microsoft-clarity" strategy="afterInteractive">{`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","xw3s9o3yx6");`}</Script></body></html>;
+  return <html lang="en"><head><meta id="app-theme-color" name="theme-color" content="#F6F0E6" /><meta id="app-color-scheme" name="color-scheme" content="light" /></head><body>{children}<Script id="microsoft-clarity" strategy="afterInteractive">{`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","xw3s9o3yx6");`}</Script></body></html>;
 }
