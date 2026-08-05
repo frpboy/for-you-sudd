@@ -100,25 +100,37 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   );
   const [chapter, setChapter] = useState(0);
   const [quiz, setQuiz] = useState(0);
-  const [muted, setMuted] = useState(
-    () =>
-      typeof window === "undefined" ||
-      localStorage.getItem("for-u-sudd-muted") !== "false",
-  );
+  const [ambientEnabled, setAmbientEnabled] = useState(() => typeof window === "undefined" || localStorage.getItem("for-u-sudd-ambient") !== "false");
+  const [ambientVolume, setAmbientVolume] = useState(() => typeof window === "undefined" ? 1 : Number(localStorage.getItem("for-u-sudd-ambient-volume") ?? 1));
+  const [showMusicControls, setShowMusicControls] = useState(false);
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [confetti, setConfetti] = useState(false);
+  const [fireworks, setFireworks] = useState(false);
+  const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
   const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
+  const activeVoice = useRef<HTMLAudioElement | null>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const fadeFrame = useRef<number | null>(null);
+  const heartCount = useRef(0);
   const index = sequence.indexOf(view);
   useEffect(() => {
     localStorage.setItem("for-u-sudd-progress", view);
   }, [view]);
+  useEffect(() => { localStorage.setItem("for-u-sudd-ambient", String(ambientEnabled)); }, [ambientEnabled]);
+  useEffect(() => { localStorage.setItem("for-u-sudd-ambient-volume", String(ambientVolume)); }, [ambientVolume]);
   useEffect(() => {
-    localStorage.setItem("for-u-sudd-muted", String(muted));
-  }, [muted]);
+    if (reduced) return;
+    const launch = () => {
+      heartCount.current += 1;
+      setFloatingHeart(heartCount.current);
+      window.setTimeout(() => setFloatingHeart(null), 5000);
+    };
+    const timer = window.setInterval(launch, 18000);
+    return () => window.clearInterval(timer);
+  }, [reduced]);
   useEffect(() => {
     if (view === "preflight" || mediaWarmed.current) return;
     mediaWarmed.current = true;
@@ -131,21 +143,37 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     }, 250);
     return () => window.clearTimeout(timer);
   }, [content.media, view]);
-  useEffect(() => {
-    if (!content.musicMediaId || !audio.current) return;
-    audio.current.muted = muted;
-    if (!muted && view !== "start")
-      void audio.current.play().catch(() => setMuted(true));
-  }, [muted, view, content.musicMediaId]);
+  const fadeAmbient = useCallback((target: number, duration = 1000, after?: () => void) => {
+    const player = audio.current;
+    if (!player) return;
+    if (fadeFrame.current) cancelAnimationFrame(fadeFrame.current);
+    const from = player.volume;
+    const started = performance.now();
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - started) / duration);
+      const eased = progress * progress * (3 - 2 * progress);
+      player.volume = from + (target - from) * eased;
+      if (progress < 1) fadeFrame.current = requestAnimationFrame(tick);
+      else { fadeFrame.current = null; after?.(); }
+    };
+    fadeFrame.current = requestAnimationFrame(tick);
+  }, []);
+  const playAmbient = useCallback(() => {
+    const player = audio.current;
+    if (!player) return;
+    player.volume = ambientVolume;
+    void player.play().catch(() => undefined);
+  }, [ambientVolume]);
+  useEffect(() => { if (ambientEnabled && content.musicMediaId) playAmbient(); }, [ambientEnabled, content.musicMediaId, playAmbient]);
   useEffect(() => {
     const pauseForInterruption = () => {
       const player = audio.current;
-      resumeAfterFocus.current = Boolean(player && !muted && !player.paused);
+      resumeAfterFocus.current = Boolean(player && ambientEnabled && !player.paused);
       player?.pause();
     };
     const resumeAfterInterruption = () => {
       const player = audio.current;
-      if (resumeAfterFocus.current && !muted && player)
+      if (resumeAfterFocus.current && ambientEnabled && player)
         void player.play().catch(() => setMuted(true));
       resumeAfterFocus.current = false;
     };
@@ -159,7 +187,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       removeEventListener("focus", resumeAfterInterruption);
       document.removeEventListener("visibilitychange", visibility);
     };
-  }, [muted]);
+  }, [ambientEnabled]);
   function go(next: View) {
     setView(next);
     window.history.pushState({ story: next }, "", `#${next}`);
@@ -202,15 +230,30 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     ? `/api/media/${content.musicMediaId}`
     : undefined;
   const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
-  const pauseMusicForVoice = () => audio.current?.pause();
+  const duckAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume * 0.25, 900); }, [ambientEnabled, ambientVolume, fadeAmbient]);
+  const restoreAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume, 1000); }, [ambientEnabled, ambientVolume, fadeAmbient]);
+  const playVoice = useCallback((voice: HTMLAudioElement) => {
+    if (activeVoice.current && activeVoice.current !== voice) activeVoice.current.pause();
+    activeVoice.current = voice;
+    duckAmbient();
+    void voice.play();
+  }, [duckAmbient]);
+  const voiceEnded = useCallback((voice: HTMLAudioElement) => {
+    if (activeVoice.current !== voice) return;
+    activeVoice.current = null;
+    restoreAmbient();
+  }, [restoreAmbient]);
+  useEffect(() => {
+    if (view === "closing") fadeAmbient(0, 1800, () => audio.current?.pause());
+  }, [fadeAmbient, view]);
   const burstConfetti = useCallback(() => {
     setConfetti(true);
     setTimeout(() => setConfetti(false), 2400);
   }, []);
-  const resumeMusicAfterVoice = () => {
-    if (!document.hidden && !muted)
-      void audio.current?.play().catch(() => setMuted(true));
-  };
+  const burstFireworks = useCallback(() => {
+    setFireworks(true);
+    window.setTimeout(() => setFireworks(false), 3100);
+  }, []);
   return (
     <main
       className="story-shell"
@@ -228,6 +271,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         </div>
       )}
       {tapPulse && <span key={tapPulse.id} className="tap-pulse" aria-hidden="true" style={{ left: tapPulse.x, top: tapPulse.y }} onAnimationEnd={() => setTapPulse(null)} />}
+      {floatingHeart && <span className="floating-heart" key={floatingHeart} aria-hidden="true">♥</span>}
       <audio ref={audio} src={musicSrc} loop preload="metadata" />
       {confetti && (
         <div className="confetti" aria-hidden="true">
@@ -242,6 +286,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           ))}
         </div>
       )}
+      {fireworks && <div className="fireworks" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <i key={index} style={{ left: `${12 + index * 19}%`, animationDelay: `${index * 240}ms` }} />)}</div>}
       <header className="story-header">
         <span className="story-brand">
           for u, {content.participants.nickname.toLowerCase()}
@@ -251,11 +296,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         </div>
         <button
           className="icon-button"
-          aria-label={muted ? "Turn music on" : "Mute music"}
-          onClick={() => setMuted((value) => !value)}
+          aria-label={ambientEnabled ? "Pause ambient music" : "Play ambient music"}
+          onClick={() => {
+            if (ambientEnabled) audio.current?.pause(); else playAmbient();
+            setAmbientEnabled((value) => !value);
+          }}
         >
-          {muted ? <VolumeX /> : <Volume2 />}
+          {ambientEnabled ? <Volume2 /> : <VolumeX />}
         </button>
+        <button className="music-settings" aria-label="Adjust ambient music volume" onClick={() => setShowMusicControls((value) => !value)}>♫</button>
+        {showMusicControls && <label className="ambient-volume">Ambient volume<input type="range" min="0" max="1" step="0.05" value={ambientVolume} onChange={(event) => { const value = Number(event.target.value); setAmbientVolume(value); if (audio.current && ambientEnabled) audio.current.volume = value; }} /></label>}
       </header>
       <AnimatePresence mode="wait">
         <motion.section
@@ -267,7 +317,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           transition={{ duration: reduced ? 0.15 : 0.48 }}
         >
           {view === "preflight" && <Preflight onReady={() => go("start")} />}
-          {view === "start" && <Start onBegin={() => { setMuted(false); go("welcome"); }} />}
+          {view === "start" && <Start onBegin={() => { setAmbientEnabled(true); playAmbient(); go("welcome"); }} />}
           {view === "welcome" && <Welcome content={content} />}
           {view === "countdown" && <Countdown birthday={content.project.birthday} />}
           {view === "chapters" && (
@@ -280,22 +330,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           )}
           {view === "numbers" && <OurNumbers content={content} />}
           {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
-          {view === "videos" && (
-            <Videos
-              content={content}
-              onForegroundPlay={pauseMusicForVoice}
-              onForegroundEnd={resumeMusicAfterVoice}
-            />
-          )}
+          {view === "videos" && <Videos content={content} />}
           {view === "voice" && (
             <Voice
               content={content}
-              onForegroundPlay={pauseMusicForVoice}
-              onForegroundEnd={resumeMusicAfterVoice}
+              onPlayVoice={playVoice}
+              onVoiceEnded={voiceEnded}
               onNext={next}
             />
           )}
-          {view === "voices" && <Voices content={content} onForegroundPlay={pauseMusicForVoice} onForegroundEnd={resumeMusicAfterVoice} />}
+          {view === "voices" && <Voices content={content} onPlayVoice={playVoice} onVoiceEnded={voiceEnded} />}
           {view === "quiz" && (
             <Quiz
               item={content.quiz[quiz]}
@@ -331,7 +375,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "ending" && (
             <Ending
               content={content}
-              onFirework={burstConfetti}
+              onFirework={burstFireworks}
               onSecret={() => go("secret")}
               onReplay={() => {
                 localStorage.removeItem("for-u-sudd-progress");
@@ -494,44 +538,25 @@ function Albums({
   content: SafeContent;
   onOpen: (id: string) => void;
 }) {
+  const photos = [...new Set(content.albums.flatMap((album) => album.mediaIds))]
+    .map((id) => content.media.find((item) => item.id === id))
+    .filter((item): item is SafeContent["media"][number] => Boolean(item));
+  const moments = photos.flatMap((photo, index) => {
+    const video = content.videos[Math.floor(index / 5)];
+    const videoMedia = index % 5 === 4 && video ? content.media.find((item) => item.id === video.mediaId) : undefined;
+    return videoMedia ? [photo, videoMedia] : [photo];
+  });
   return (
     <section className="collection polaroid-stack">
-      <p className="eyebrow">the little things</p>
-      <h1>Our photo album</h1>
-      {content.albums.map((album) => (
-        <div className="album" key={album.id}>
-          <h2>{album.title}</h2>
-          <div className="photo-grid">
-            {album.mediaIds.map((id) => {
-              const media = content.media.find((item) => item.id === id);
-              return (
-                media && (
-                  <button
-                    className="photo-button polaroid"
-                    onClick={() => onOpen(id)}
-                    key={id}
-                  >
-                    <MediaImage media={media} />
-                    <span>{media.caption}</span>
-                  </button>
-                )
-              );
-            })}
-          </div>
-        </div>
-      ))}
+      <p className="eyebrow">in no particular order</p>
+      <h1>Little pieces of <em>us.</em></h1>
+      <div className="photo-grid mixed-memories">
+        {moments.map((media) => media.kind === "video" ? <video className="polaroid memory-video" key={media.id} src={`/api/media/${media.id}`} controls playsInline preload="metadata" /> : <button className="photo-button polaroid" onClick={() => onOpen(media.id)} key={media.id}><MediaImage media={media} /><span>{media.caption}</span></button>)}
+      </div>
     </section>
   );
 }
-function Videos({
-  content,
-  onForegroundPlay,
-  onForegroundEnd,
-}: {
-  content: SafeContent;
-  onForegroundPlay: () => void;
-  onForegroundEnd: () => void;
-}) {
+function Videos({ content }: { content: SafeContent }) {
   return (
     <section className="collection">
       <p className="eyebrow">press play</p>
@@ -554,9 +579,6 @@ function Videos({
                     playsInline
                     preload="metadata"
                     poster={poster ? `/api/media/${poster.id}` : undefined}
-                    onPlay={onForegroundPlay}
-                    onPause={onForegroundEnd}
-                    onEnded={onForegroundEnd}
                   />
                   <span>{video.title}</span>
                 </article>
@@ -575,13 +597,13 @@ function Videos({
 }
 function Voice({
   content,
-  onForegroundPlay,
-  onForegroundEnd,
+  onPlayVoice,
+  onVoiceEnded,
   onNext,
 }: {
   content: SafeContent;
-  onForegroundPlay: () => void;
-  onForegroundEnd: () => void;
+  onPlayVoice: (voice: HTMLAudioElement) => void;
+  onVoiceEnded: (voice: HTMLAudioElement) => void;
   onNext: () => void;
 }) {
   const audio = useRef<HTMLAudioElement>(null);
@@ -598,11 +620,11 @@ function Voice({
           <audio ref={audio}
             src={`/api/media/${media.id}`}
             preload="metadata"
-            onPlay={() => { setPlaying(true); onForegroundPlay(); }}
-            onPause={() => { setPlaying(false); onForegroundEnd(); }}
-            onEnded={() => { setPlaying(false); onForegroundEnd(); window.setTimeout(onNext, 500); }}
+            onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }}
+            onPause={() => setPlaying(false)}
+            onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); window.setTimeout(onNext, 500); }}
           />
-          <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => audio.current?.paused ? void audio.current.play() : audio.current?.pause()} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
+          <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
           <div className="wave" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 45}ms` }} />)}</div>
           <p>{playing ? "Playing for you…" : "Tap to listen, or swipe when you are ready."}</p>
         </div>
@@ -615,9 +637,9 @@ function Voice({
     </section>
   );
 }
-function Voices({ content, onForegroundPlay, onForegroundEnd }: { content: SafeContent; onForegroundPlay: () => void; onForegroundEnd: () => void }) {
-  const media = content.voice.mediaId ? content.media.find((item) => item.id === content.voice.mediaId) : undefined;
-  return <section className="voice voices"><p className="eyebrow">kept close</p><h1>Voices that love you <em>♥</em></h1>{media ? <article className="voice-card"><span className="voice-avatar">R</span><div><strong>{content.participants.sender}</strong><small>From me</small></div><audio src={`/api/media/${media.id}`} controls preload="metadata" onPlay={onForegroundPlay} onPause={onForegroundEnd} onEnded={onForegroundEnd} /></article> : <Empty title="More voices are waiting" text="Add approved recordings here when they are ready." />}<p className="voice-note">Parents, friends, and family voices appear here as approved recordings are added.</p></section>;
+function Voices({ content, onPlayVoice, onVoiceEnded }: { content: SafeContent; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void }) {
+  const voices = content.voices.length ? content.voices : content.voice.mediaId ? [{ id: "from-me", name: content.participants.sender, relationship: "From me", mediaId: content.voice.mediaId }] : [];
+  return <section className="voice voices"><p className="eyebrow">kept close</p><h1>Voices that love you <em>♥</em></h1>{voices.length ? voices.map((voice) => { const media = content.media.find((item) => item.id === voice.mediaId); return media && <article className="voice-card" key={voice.id}><span className="voice-avatar">{voice.name.slice(0, 1)}</span><div><strong>{voice.name}</strong><small>{voice.relationship}{voice.duration ? ` · ${voice.duration}` : ""}</small></div><audio src={`/api/media/${media.id}`} controls preload="metadata" onPlay={(event) => onPlayVoice(event.currentTarget)} onEnded={(event) => onVoiceEnded(event.currentTarget)} /></article>; }) : <Empty title="More voices are waiting" text="Add approved recordings here when they are ready." />}<p className="voice-note">Parents, friends, and family voices appear here as approved recordings are added.</p></section>;
 }
 function DatePicker({
   value,
@@ -969,6 +991,7 @@ function Ending({
     return () => clearTimeout(timer);
   }, [presses]);
   const reveal = () => {
+    navigator.vibrate?.(15);
     const next = presses + 1;
     if (next >= 3) {
       setPresses(0);

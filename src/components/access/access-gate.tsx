@@ -6,9 +6,16 @@ export function AccessGate() {
   const [passphrase, setPassphrase] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [opening, setOpening] = useState(true);
+  const [stage, setStage] = useState(0);
   const errorRef = useRef<HTMLParagraphElement>(null);
-  useEffect(() => { const timer = window.setTimeout(() => setOpening(false), 3100); return () => window.clearTimeout(timer); }, []);
+  useEffect(() => {
+    const timers = [
+      window.setTimeout(() => setStage(1), 2500),
+      window.setTimeout(() => setStage(2), 5900),
+      window.setTimeout(() => setStage(3), 10300),
+    ];
+    return () => timers.forEach(window.clearTimeout);
+  }, []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -33,9 +40,9 @@ export function AccessGate() {
   }
   return (
     <main className="access-shell">
-      {opening && <section className="access-prologue" aria-live="polite"><Heart className="prologue-heart" fill="currentColor" aria-hidden="true" /><p>Every love story has a beginning.</p><span>Ours started with a single message.</span></section>}
+      {stage < 3 && <section className={`access-prologue stage-${stage}`} aria-live="polite"><div className="prologue-dust" aria-hidden="true">{Array.from({ length: 10 }, (_, index) => <i key={index} />)}</div><Heart className="prologue-heart" fill="currentColor" aria-hidden="true" />{stage === 1 && <p>Every love story<br />has a beginning.</p>}{stage === 2 && <p>Ours started<br />with a single message.</p>}</section>}
       <div className="grain" aria-hidden="true" />
-      <section className="access-content" aria-labelledby="access-title">
+      <section className={`access-content${stage === 3 ? " is-ready" : ""}`} aria-labelledby="access-title">
         <Heart className="mark" aria-hidden="true" fill="currentColor" />
         <p className="eyebrow">FOR U SUDD</p>
         <h1 id="access-title">

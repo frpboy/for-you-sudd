@@ -28,6 +28,7 @@ export const contentSchema = z.object({
   albums: z.array(z.object({ id: z.string(), title: z.string(), mediaIds: z.array(z.string()).min(1) })).min(1),
   videos: z.array(z.object({ id: z.string(), title: z.string(), mediaId: z.string() })),
   voice: z.object({ title: z.string(), mediaId: z.string().optional(), transcript: z.string().optional() }),
+  voices: z.array(z.object({ id: z.string(), name: z.string(), relationship: z.string(), mediaId: z.string(), profileMediaId: z.string().optional(), duration: z.string().optional() })).default([]),
   quiz: z.array(z.object({ id: z.string(), question: z.string(), acceptedAnswers: z.array(z.string()).min(1), choices: z.array(z.string()).min(2).optional(), hint: z.string().optional() })).min(1).max(5),
   memories: z.array(z.string()), reasons: z.array(z.string()), dreams: z.array(z.string()),
   letter: z.object({ body: z.string().min(1), signature: z.string().min(1), mediaIds: z.array(z.string()).default([]) }),
