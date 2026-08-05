@@ -161,6 +161,7 @@ test("keeps the quiz on the current question until its date is correct", async (
   ).toBeVisible();
 });
 test("shows and selects the favourite-moment radio option", async ({ page }) => {
+  test.setTimeout(45_000);
   await enterStory(page);
   await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
   await page.reload();

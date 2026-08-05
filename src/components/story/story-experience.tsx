@@ -111,7 +111,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
   const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
+  const storyShell = useRef<HTMLElement>(null);
   const activeVoice = useRef<HTMLAudioElement | null>(null);
+  const activeVideo = useRef<HTMLVideoElement | null>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -121,15 +123,18 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const heartCount = useRef(0);
   const restoredProgress = useRef(false);
   const index = sequence.indexOf(view);
+  const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
+    .map((id) => content.media.find((item) => item.id === id))
+    .filter((item): item is SafeContent["media"][number] => item?.kind === "image"), [content.albums, content.media]);
   useEffect(() => {
     if (restoredProgress.current) return;
     restoredProgress.current = true;
     const saved = localStorage.getItem("for-u-sudd-progress") as View | null;
-    if (saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday)) {
-      setView("welcome");
-    } else if (saved && sequence.includes(saved)) {
-      setView(saved);
-    }
+    const restored = saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday)
+      ? "welcome"
+      : saved && sequence.includes(saved) ? saved : null;
+    const timer = restored ? window.setTimeout(() => setView(restored), 0) : undefined;
+    return () => { if (timer) window.clearTimeout(timer); };
   }, [content.project.birthday, sequence]);
   useEffect(() => {
     localStorage.setItem("for-u-sudd-progress", view);
@@ -237,6 +242,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const timer = window.setInterval(checkBirthday, 1000);
     return () => window.clearInterval(timer);
   }, [content.project.birthday, hasBirthdayStarted, view]);
+  useEffect(() => {
+    if (view === "albums" || view === "videos") storyShell.current?.scrollTo({ top: 0 });
+    else if (storyShell.current) storyShell.current.scrollTop = 0;
+  }, [view]);
   function navigate(direction: "next" | "previous") {
     if (navigationLocked.current) return;
     navigationLocked.current = true;
@@ -249,10 +258,18 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   function handleGestureEnd(clientX: number, clientY: number) {
     const start = swipeStart.current;
     swipeStart.current = null;
-    if (!start || view === "quiz" || view === "preflight" || view === "closing") return;
+    if (!start || mediaId || view === "quiz" || view === "preflight" || view === "closing") return;
     const x = clientX - start.x;
     const y = clientY - start.y;
     const velocity = Math.abs(x) / Math.max(1, performance.now() - start.time);
+    if (Math.abs(y) > Math.abs(x) * 1.35 && (view === "albums" || view === "videos")) {
+      const shell = storyShell.current;
+      if (shell && Math.abs(y) >= 80) {
+        if (y < 0 && shell.scrollTop + shell.clientHeight >= shell.scrollHeight - 2) navigate("next");
+        if (y > 0 && shell.scrollTop <= 2) navigate("previous");
+      }
+      return;
+    }
     if (Math.abs(x) < Math.abs(y) * 1.35 || (Math.abs(x) < 80 && velocity < 0.45)) return;
     ignoreNextTap.current = true;
     if (x < 0) navigate("next"); else navigate("previous");
@@ -262,12 +279,13 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       ignoreNextTap.current = false;
       return;
     }
-    if (view === "quiz" || view === "preflight" || view === "closing") return;
+    if (mediaId || view === "quiz" || view === "preflight" || view === "closing") return;
     if ((event.target as HTMLElement).closest("[data-story-interactive], button, input, label, audio, video, select, textarea, a")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const position = (event.clientX - bounds.left) / bounds.width;
-    if (position <= 0.3) navigate("previous");
-    if (position >= 0.7) navigate("next");
+    const edge = view === "albums" || view === "videos" ? 0.05 : 0.3;
+    if (position <= edge) navigate("previous");
+    if (position >= 1 - edge) navigate("next");
   }
   useEffect(() => {
     const onPop = () => {
@@ -284,6 +302,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const duckAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume * 0.25, 900); }, [ambientEnabled, ambientVolume, fadeAmbient]);
   const restoreAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume, 1000); }, [ambientEnabled, ambientVolume, fadeAmbient]);
+  const playVideo = useCallback((video: HTMLVideoElement) => {
+    if (activeVideo.current && activeVideo.current !== video) activeVideo.current.pause();
+    activeVideo.current = video;
+    if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume * 0.25, 250);
+  }, [ambientEnabled, ambientVolume, fadeAmbient]);
+  const videoEnded = useCallback((video: HTMLVideoElement) => {
+    if (activeVideo.current !== video) return;
+    activeVideo.current = null;
+    restoreAmbient();
+  }, [restoreAmbient]);
   const playVoice = useCallback((voice: HTMLAudioElement) => {
     if (activeVoice.current && activeVoice.current !== voice) activeVoice.current.pause();
     activeVoice.current = voice;
@@ -308,7 +336,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   }, []);
   return (
     <main
-      className="story-shell"
+      ref={storyShell}
+      className={`story-shell${view === "albums" || view === "videos" ? " is-gallery" : ""}`}
       onClickCapture={(event) => {
         if (!event.detail) return;
         const bounds = event.currentTarget.getBoundingClientRect();
@@ -395,7 +424,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           )}
           {view === "numbers" && <OurNumbers />}
           {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
-          {view === "videos" && <Videos content={content} />}
+          {view === "videos" && <Videos content={content} onPlay={playVideo} onStop={videoEnded} />}
           {view === "voice" && (
             <Voice
               content={content}
@@ -463,7 +492,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       {view !== "quiz" && view !== "closing" && <p className="swipe-hint" aria-hidden="true">Swipe to wander through the memories</p>}
       <AnimatePresence>
         {active?.kind === "image" && (
-          <MediaOverlay media={active} onClose={() => setMediaId(null)} />
+          <MediaOverlay media={active} photos={galleryPhotos} onChange={setMediaId} onClose={() => setMediaId(null)} />
         )}
       </AnimatePresence>
     </main>
@@ -598,7 +627,7 @@ function Albums({
     </section>
   );
 }
-function Videos({ content }: { content: SafeContent }) {
+function Videos({ content, onPlay, onStop }: { content: SafeContent; onPlay: (video: HTMLVideoElement) => void; onStop: (video: HTMLVideoElement) => void }) {
   return (
     <section className="collection">
       <p className="eyebrow">press play</p>
@@ -614,16 +643,7 @@ function Videos({ content }: { content: SafeContent }) {
               : undefined;
             return (
               media && (
-                <article className="video-card" key={video.id}>
-                  <video
-                    src={`/api/media/${media.id}`}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    poster={poster ? `/api/media/${poster.id}` : undefined}
-                  />
-                  <span>{video.title}</span>
-                </article>
+                <VideoCard key={video.id} media={media} poster={poster} title={video.title} onPlay={onPlay} onStop={onStop} />
               )
             );
           })}
@@ -636,6 +656,18 @@ function Videos({ content }: { content: SafeContent }) {
       )}
     </section>
   );
+}
+function VideoCard({ media, poster, title, onPlay, onStop }: { media: SafeContent["media"][number]; poster?: SafeContent["media"][number]; title: string; onPlay: (video: HTMLVideoElement) => void; onStop: (video: HTMLVideoElement) => void }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [nearby, setNearby] = useState(false);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(([entry]) => setNearby(entry.isIntersecting || entry.intersectionRatio > 0), { rootMargin: "320px 0px" });
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+  return <article className="video-card"><video ref={ref} src={nearby ? `/api/media/${media.id}` : undefined} controls playsInline preload="metadata" poster={poster ? `/api/media/${poster.id}` : undefined} onPlay={() => ref.current && onPlay(ref.current)} onPause={() => ref.current && onStop(ref.current)} onEnded={() => ref.current && onStop(ref.current)} /><span>{title}</span></article>;
 }
 function Voice({
   content,
@@ -1143,12 +1175,22 @@ function MediaImage({ media }: { media: SafeContent["media"][number] }) {
 }
 function MediaOverlay({
   media,
+  photos,
+  onChange,
   onClose,
 }: {
   media: SafeContent["media"][number];
+  photos: SafeContent["media"];
+  onChange: (id: string) => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
+  const gesture = useRef<{ x: number; y: number } | null>(null);
+  const photoIndex = photos.findIndex((photo) => photo.id === media.id);
+  const move = (direction: -1 | 1) => {
+    const next = photos[photoIndex + direction];
+    if (next) onChange(next.id);
+  };
   useEffect(() => {
     ref.current?.focus();
   }, []);
@@ -1161,7 +1203,27 @@ function MediaOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
+      onPointerDown={(event) => { gesture.current = { x: event.clientX, y: event.clientY }; }}
+      onPointerUp={(event) => {
+        const start = gesture.current;
+        gesture.current = null;
+        if (!start) return;
+        const distance = event.clientX - start.x;
+        if (Math.abs(distance) >= 60 && Math.abs(distance) > Math.abs(event.clientY - start.y) * 1.3) move(distance < 0 ? 1 : -1);
+      }}
+      onTouchStart={(event) => {
+        if (gesture.current) return;
+        const touch = event.touches[0];
+        if (touch) gesture.current = { x: touch.clientX, y: touch.clientY };
+      }}
+      onTouchEnd={(event) => {
+        const start = gesture.current;
+        gesture.current = null;
+        const touch = event.changedTouches[0];
+        if (!start || !touch) return;
+        const distance = touch.clientX - start.x;
+        if (Math.abs(distance) >= 60 && Math.abs(distance) > Math.abs(touch.clientY - start.y) * 1.3) move(distance < 0 ? 1 : -1);
+      }}
     >
       <button
         ref={ref}
@@ -1173,7 +1235,6 @@ function MediaOverlay({
       </button>
       <figure
         className="media-frame"
-        onClick={(event) => event.stopPropagation()}
       >
         <MediaImage media={media} />
         <figcaption>{media.caption}</figcaption>
