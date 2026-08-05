@@ -114,7 +114,6 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const audio = useRef<HTMLAudioElement>(null);
   const storyShell = useRef<HTMLElement>(null);
   const activeVoice = useRef<HTMLAudioElement | null>(null);
-  const activeVideo = useRef<HTMLVideoElement | null>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -307,16 +306,6 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const duckAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume * 0.25, 900); }, [ambientEnabled, ambientVolume, fadeAmbient]);
   const restoreAmbient = useCallback(() => { if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume, 1000); }, [ambientEnabled, ambientVolume, fadeAmbient]);
-  const playVideo = useCallback((video: HTMLVideoElement) => {
-    if (activeVideo.current && activeVideo.current !== video) activeVideo.current.pause();
-    activeVideo.current = video;
-    if (ambientEnabled && !audio.current?.paused) fadeAmbient(ambientVolume * 0.25, 250);
-  }, [ambientEnabled, ambientVolume, fadeAmbient]);
-  const videoEnded = useCallback((video: HTMLVideoElement) => {
-    if (activeVideo.current !== video) return;
-    activeVideo.current = null;
-    restoreAmbient();
-  }, [restoreAmbient]);
   const playVoice = useCallback((voice: HTMLAudioElement) => {
     if (activeVoice.current && activeVoice.current !== voice) activeVoice.current.pause();
     activeVoice.current = voice;
@@ -429,7 +418,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           )}
           {view === "numbers" && <OurNumbers />}
           {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
-          {view === "videos" && <Videos content={content} onPlay={playVideo} onStop={videoEnded} />}
+          {view === "videos" && <Videos content={content} />}
           {view === "voice" && (
             <Voice
               content={content}
@@ -632,10 +621,10 @@ function Albums({
     </section>
   );
 }
-function Videos({ content, onPlay, onStop }: { content: SafeContent; onPlay: (video: HTMLVideoElement) => void; onStop: (video: HTMLVideoElement) => void }) {
+function Videos({ content }: { content: SafeContent }) {
   return (
     <section className="collection">
-      <p className="eyebrow">press play</p>
+      <p className="eyebrow">little moments in motion</p>
       <h1>Little moving memories</h1>
       {content.videos.length ? (
         <div className="video-list">
@@ -648,7 +637,7 @@ function Videos({ content, onPlay, onStop }: { content: SafeContent; onPlay: (vi
               : undefined;
             return (
               media && (
-                <VideoCard key={video.id} media={media} poster={poster} title={video.title} onPlay={onPlay} onStop={onStop} />
+                <VideoCard key={video.id} media={media} poster={poster} title={video.title} />
               )
             );
           })}
@@ -662,17 +651,28 @@ function Videos({ content, onPlay, onStop }: { content: SafeContent; onPlay: (vi
     </section>
   );
 }
-function VideoCard({ media, poster, title, onPlay, onStop }: { media: SafeContent["media"][number]; poster?: SafeContent["media"][number]; title: string; onPlay: (video: HTMLVideoElement) => void; onStop: (video: HTMLVideoElement) => void }) {
+function VideoCard({ media, poster, title }: { media: SafeContent["media"][number]; poster?: SafeContent["media"][number]; title: string }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [nearby, setNearby] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    const observer = new IntersectionObserver(([entry]) => setNearby(entry.isIntersecting || entry.intersectionRatio > 0), { rootMargin: "320px 0px" });
+    const observer = new IntersectionObserver(([entry]) => {
+      const isVisible = entry.isIntersecting && entry.intersectionRatio > 0;
+      setVisible(isVisible);
+      if (isVisible) setLoaded(true);
+    }, { threshold: 0.01 });
     observer.observe(video);
     return () => observer.disconnect();
   }, []);
-  return <article className="video-card"><video ref={ref} src={nearby ? `/api/media/${media.id}` : undefined} controls playsInline preload="metadata" poster={poster ? `/api/media/${poster.id}` : undefined} onPlay={() => ref.current && onPlay(ref.current)} onPause={() => ref.current && onStop(ref.current)} onEnded={() => ref.current && onStop(ref.current)} /><span>{title}</span></article>;
+  useEffect(() => {
+    const video = ref.current;
+    if (!video) return;
+    if (visible) void video.play().catch(() => undefined);
+    else video.pause();
+  }, [visible]);
+  return <article className="video-card"><video ref={ref} src={loaded ? `/api/media/${media.id}` : undefined} autoPlay muted loop playsInline preload="metadata" poster={loaded && poster ? `/api/media/${poster.id}` : undefined} aria-label={title} /><span>{title}</span></article>;
 }
 function Voice({
   content,
