@@ -72,13 +72,13 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [hasBirthdayStarted, setHasBirthdayStarted] = useState(() => hasLocalBirthdayStarted(content.project.birthday));
   const sequence = useMemo<View[]>(
     () => [
-      "voice",
       ...(!hasBirthdayStarted ? ["countdown" as const] : []),
       "welcome",
       "chapters",
       "numbers",
       "albums",
       "videos",
+      "voice",
       "voices",
       "quiz",
       ...(content.features.memoryJar ? ["memories" as const] : []),
@@ -95,9 +95,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     [content.features, hasBirthdayStarted],
   );
   const [view, setView] = useState<View>(() =>
-    typeof window === "undefined" ? "voice" : (() => {
+    typeof window === "undefined" ? (hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : "countdown") : (() => {
       const saved = localStorage.getItem("for-u-sudd-progress") as View | null;
-      return saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : saved || "voice";
+      return saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : saved || (hasLocalBirthdayStarted(content.project.birthday) ? "welcome" : "countdown");
     })(),
   );
   const [chapter, setChapter] = useState(0);
@@ -115,10 +115,22 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const ignoreNextTap = useRef(false);
   const navigationLocked = useRef(false);
   const fadeFrame = useRef<number | null>(null);
   const heartCount = useRef(0);
+  const restoredProgress = useRef(false);
   const index = sequence.indexOf(view);
+  useEffect(() => {
+    if (restoredProgress.current) return;
+    restoredProgress.current = true;
+    const saved = localStorage.getItem("for-u-sudd-progress") as View | null;
+    if (saved === "countdown" && hasLocalBirthdayStarted(content.project.birthday)) {
+      setView("welcome");
+    } else if (saved && sequence.includes(saved)) {
+      setView(saved);
+    }
+  }, [content.project.birthday, sequence]);
   useEffect(() => {
     localStorage.setItem("for-u-sudd-progress", view);
   }, [view]);
@@ -228,22 +240,30 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   function navigate(direction: "next" | "previous") {
     if (navigationLocked.current) return;
     navigationLocked.current = true;
-    window.setTimeout(() => { navigationLocked.current = false; }, 650);
+    window.setTimeout(() => { navigationLocked.current = false; }, 800);
     if (direction === "next") next(); else previous();
   }
   function handleSwipeEnd(event: React.PointerEvent<HTMLElement>) {
+    handleGestureEnd(event.clientX, event.clientY);
+  }
+  function handleGestureEnd(clientX: number, clientY: number) {
     const start = swipeStart.current;
     swipeStart.current = null;
     if (!start || view === "quiz" || view === "preflight" || view === "closing") return;
-    const x = event.clientX - start.x;
-    const y = event.clientY - start.y;
+    const x = clientX - start.x;
+    const y = clientY - start.y;
     const velocity = Math.abs(x) / Math.max(1, performance.now() - start.time);
-    if (Math.abs(x) < 80 && velocity < 0.45 || Math.abs(x) < Math.abs(y) * 1.35) return;
+    if (Math.abs(x) < Math.abs(y) * 1.35 || (Math.abs(x) < 80 && velocity < 0.45)) return;
+    ignoreNextTap.current = true;
     if (x < 0) navigate("next"); else navigate("previous");
   }
   function handleStoryTap(event: React.MouseEvent<HTMLElement>) {
+    if (ignoreNextTap.current) {
+      ignoreNextTap.current = false;
+      return;
+    }
     if (view === "quiz" || view === "preflight" || view === "closing") return;
-    if ((event.target as HTMLElement).closest("button, input, label, audio, video, select, textarea, a")) return;
+    if ((event.target as HTMLElement).closest("[data-story-interactive], button, input, label, audio, video, select, textarea, a")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const position = (event.clientX - bounds.left) / bounds.width;
     if (position <= 0.3) navigate("previous");
@@ -295,9 +315,20 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
       }}
       onClick={handleStoryTap}
-      onPointerDown={(event) => { swipeStart.current = { x: event.clientX, y: event.clientY, time: performance.now() }; event.currentTarget.setPointerCapture(event.pointerId); }}
+      onPointerDown={(event) => { swipeStart.current = { x: event.clientX, y: event.clientY, time: performance.now() }; }}
       onPointerUp={handleSwipeEnd}
       onPointerCancel={() => { swipeStart.current = null; }}
+      onTouchStart={(event) => {
+        if (swipeStart.current) return;
+        const touch = event.touches[0];
+        if (touch) swipeStart.current = { x: touch.clientX, y: touch.clientY, time: performance.now() };
+      }}
+      onTouchEnd={(event) => {
+        if (!swipeStart.current) return;
+        const touch = event.changedTouches[0];
+        if (touch) handleGestureEnd(touch.clientX, touch.clientY);
+      }}
+      onTouchCancel={() => { swipeStart.current = null; }}
     >
       {showAmbient && (
         <div className="ambient-particles" aria-hidden="true">
@@ -321,7 +352,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         </div>
       )}
       {fireworks && <div className="fireworks" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <i key={index} style={{ left: `${12 + index * 19}%`, animationDelay: `${index * 240}ms` }} />)}</div>}
-      <header className="story-header">
+      <header className="story-header" data-story-interactive>
         <span className="story-brand">
           for u, {content.participants.nickname.toLowerCase()}
         </span>
@@ -348,7 +379,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
-          transition={{ duration: reduced ? 0.15 : 0.48 }}
+          transition={{ duration: reduced ? 0.15 : 0.72 }}
         >
           {view === "preflight" && <Preflight onReady={() => go("start")} />}
           {view === "start" && <Start onBegin={() => { setAmbientEnabled(true); playAmbient(); go("welcome"); }} />}
@@ -362,7 +393,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               )}
             />
           )}
-          {view === "numbers" && <OurNumbers content={content} />}
+          {view === "numbers" && <OurNumbers />}
           {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
           {view === "videos" && <Videos content={content} />}
           {view === "voice" && (
@@ -370,7 +401,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               content={content}
               onPlayVoice={playVoice}
               onVoiceEnded={voiceEnded}
-              onNext={next}
+              onNext={() => navigate("next")}
             />
           )}
           {view === "voices" && <Voices content={content} onPlayVoice={playVoice} onVoiceEnded={voiceEnded} />}
@@ -382,7 +413,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               onNext={() =>
                 quiz < content.quiz.length - 1
                   ? setQuiz((value) => value + 1)
-                  : next()
+                  : navigate("next")
               }
             />
           )}
@@ -402,9 +433,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
             <FinalNote content={content} onOpen={setMediaId} />
           )}
           {view === "final-photo" && <FinalPhoto content={content} />}
-          {view === "cake" && <Cake onNext={next} />}
+          {view === "cake" && <Cake onNext={() => navigate("next")} />}
           {view === "gift" && (
-            <Gift onOpen={burstConfetti} onNext={next} />
+            <Gift onOpen={burstConfetti} onNext={() => navigate("next")} />
           )}
           {view === "ending" && (
             <Ending
@@ -537,7 +568,7 @@ function Chapter({
     </article>
   );
 }
-function OurNumbers({ content }: { content: SafeContent }) {
+function OurNumbers() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 1000); return () => window.clearInterval(timer); }, []);
   const elapsed = Math.max(0, now.getTime() - new Date("2025-12-26T18:12:00+05:30").getTime());
@@ -545,8 +576,7 @@ function OurNumbers({ content }: { content: SafeContent }) {
   const hours = Math.floor(elapsed / 3600000) % 24;
   const minutes = Math.floor(elapsed / 60000) % 60;
   const seconds = Math.floor(elapsed / 1000) % 60;
-  const photos = content.media.filter((item) => item.kind === "image").length;
-  return <section className="our-numbers live-numbers"><p className="eyebrow">together since</p><h1>26 December 2025<br /><em>6:12 PM</em></h1><div className="live-duration" aria-live="polite"><p><b>♥</b><strong>{days}</strong><span>Days</span></p><p><strong>{String(hours).padStart(2, "0")}</strong><span>Hours</span></p><p><strong>{String(minutes).padStart(2, "0")}</strong><span>Minutes</span></p><p><strong>{String(seconds).padStart(2, "0")}</strong><span>Seconds</span></p></div><div className="real-counts"><p>{photos} photos kept here</p><p>{content.videos.length} video memories</p><p>∞ love</p></div></section>;
+  return <section className="our-numbers live-numbers"><p className="eyebrow">together since</p><h1>26 December 2025<br /><em>6:12 PM</em></h1><div className="live-duration" aria-live="polite"><p><b>♥</b><strong>{days}</strong><span>Days</span></p><p><strong>{String(hours).padStart(2, "0")}</strong><span>Hours</span></p><p><strong>{String(minutes).padStart(2, "0")}</strong><span>Minutes</span></p><p><strong>{String(seconds).padStart(2, "0")}</strong><span>Seconds</span></p></div></section>;
 }
 function Albums({
   content,
@@ -557,18 +587,13 @@ function Albums({
 }) {
   const photos = [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
-    .filter((item): item is SafeContent["media"][number] => Boolean(item));
-  const moments = photos.flatMap((photo, index) => {
-    const video = content.videos[Math.floor(index / 5)];
-    const videoMedia = index % 5 === 4 && video ? content.media.find((item) => item.id === video.mediaId) : undefined;
-    return videoMedia ? [photo, videoMedia] : [photo];
-  });
+    .filter((item): item is SafeContent["media"][number] => item?.kind === "image");
   return (
     <section className="collection polaroid-stack">
       <p className="eyebrow">in no particular order</p>
       <h1>Little pieces of <em>us.</em></h1>
       <div className="photo-grid mixed-memories">
-        {moments.map((media) => media.kind === "video" ? <video className="polaroid memory-video" key={media.id} src={`/api/media/${media.id}`} controls playsInline preload="metadata" /> : <button className="photo-button polaroid" onClick={() => onOpen(media.id)} key={media.id}><MediaImage media={media} /><span>{media.caption}</span></button>)}
+        {photos.map((media) => <button className="photo-button polaroid" onClick={() => onOpen(media.id)} key={media.id}><MediaImage media={media} /><span>{media.caption}</span></button>)}
       </div>
     </section>
   );

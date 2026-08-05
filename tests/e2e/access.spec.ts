@@ -7,9 +7,7 @@ async function enterStory(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /open the next memory/i }).click();
   expect((await accessResponse).status()).toBe(200);
   await expect(page).toHaveURL(/story/);
-  await expect(
-    page.getByRole("button", { name: /play voice message/i }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
 }
 async function answerDate(
   page: import("@playwright/test").Page,
@@ -48,6 +46,18 @@ test("navigates stories with edge taps and horizontal swipes", async ({ page }) 
   await page.mouse.move(170, 420, { steps: 4 });
   await page.mouse.up();
   await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
+});
+test("navigates with native touch events", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium-mobile", "TouchEvent construction is Chromium coverage.");
+  await enterStory(page);
+  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "welcome"));
+  await page.reload();
+  await page.locator("main.story-shell").evaluate((target) => {
+    const touch = (x: number) => new Touch({ identifier: 1, target, clientX: x, clientY: 420 });
+    target.dispatchEvent(new TouchEvent("touchstart", { bubbles: true, touches: [touch(340)] }));
+    target.dispatchEvent(new TouchEvent("touchend", { bubbles: true, changedTouches: [touch(80)] }));
+  });
+  await expect(page.getByRole("heading", { name: /it all started/i })).toBeVisible();
 });
 test("does not disclose media to unauthenticated requests", async ({
   request,
