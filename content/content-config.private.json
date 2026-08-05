@@ -4,7 +4,7 @@
   "greeting": "Happy Birthday to the most special person in my life!", "narrativeAnswer": "Switzerland",
   "chapters": [
     { "id": "first-message", "title": "It All Started", "date": "19 December 2025", "body": "The beginning of our story.", "mediaId": "photo-rose" },
-    { "id": "commitment", "title": "We Became Us", "date": "26 December 2025 · 6:12 PM", "body": "A day that became ours.", "mediaId": "photo-rose" },
+    { "id": "commitment", "title": "We Became Us", "date": "26 December 2025 · 6:12 PM", "body": "A day that became ours.", "mediaId": "photo-car" },
     { "id": "first-meet", "title": "Our First Meeting", "date": "6 January 2026 · 4:20 AM", "body": "A moment we will always remember.", "mediaId": "photo-hands" },
     { "id": "station", "title": "A Place in Our Story", "date": "Krishnarajapuram Railway Station, Bengaluru", "body": "A place that will always be special to us.", "mediaId": "station-krishnarajapuram" }
   ],

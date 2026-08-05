@@ -4,7 +4,7 @@ import { normalizeAnswer } from "@/lib/answer-normalization";
 
 const attempts = new Map<string, { count: number; until: number }>();
 const windowMs = 15 * 60 * 1000;
-const maximumAttempts = 8;
+const maximumAttempts = Number(process.env.ACCESS_RATE_LIMIT_MAX ?? 8);
 
 export function checkRateLimit(key: string) {
   const now = Date.now(); const entry = attempts.get(key);

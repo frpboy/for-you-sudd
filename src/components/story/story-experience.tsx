@@ -11,7 +11,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoryContent } from "@/content/schema";
 import { countdownParts, getBirthdayState } from "@/lib/birthday-state";
 import { matchesAnswer } from "@/lib/answer-normalization";
@@ -25,18 +25,22 @@ type View =
   | "welcome"
   | "countdown"
   | "chapters"
+  | "numbers"
   | "albums"
   | "videos"
   | "voice"
+  | "voices"
   | "quiz"
   | "memories"
   | "reasons"
   | "dreams"
   | "letter"
+  | "final-photo"
   | "final-note"
   | "cake"
   | "gift"
   | "ending"
+  | "closing"
   | "secret";
 const labels: Record<View, string> = {
   preflight: "Loading",
@@ -44,18 +48,22 @@ const labels: Record<View, string> = {
   welcome: "Welcome",
   countdown: "Birthday",
   chapters: "Our story",
+  numbers: "Our numbers",
   albums: "Photos",
   videos: "Videos",
   voice: "Voice",
+  voices: "Voices",
   quiz: "Quiz",
   memories: "Memories",
   reasons: "Reasons",
   dreams: "Dreams",
   letter: "Letter",
+  "final-photo": "Always us",
   "final-note": "One last note",
   cake: "Cake",
   gift: "Gift",
   ending: "Ending",
+  closing: "Always",
   secret: "A small secret",
 };
 
@@ -63,30 +71,32 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const reduced = useReducedMotion();
   const sequence = useMemo<View[]>(
     () => [
-      "preflight",
-      "start",
+      "voice",
       "welcome",
       "countdown",
       "chapters",
+      "numbers",
       "albums",
       "videos",
-      "voice",
+      "voices",
       "quiz",
       ...(content.features.memoryJar ? ["memories" as const] : []),
       ...(content.features.reasons ? ["reasons" as const] : []),
       ...(content.features.dreams ? ["dreams" as const] : []),
-      "letter",
       ...(content.features.cake ? ["cake" as const] : []),
+      "letter",
       "gift",
-      "ending",
+      "final-photo",
       "final-note",
+      "ending",
+      "closing",
     ],
     [content.features],
   );
   const [view, setView] = useState<View>(() =>
     typeof window === "undefined"
-      ? "preflight"
-      : (localStorage.getItem("for-u-sudd-progress") as View) || "preflight",
+      ? "voice"
+      : (localStorage.getItem("for-u-sudd-progress") as View) || "voice",
   );
   const [chapter, setChapter] = useState(0);
   const [quiz, setQuiz] = useState(0);
@@ -101,6 +111,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const audio = useRef<HTMLAudioElement>(null);
   const resumeAfterFocus = useRef(false);
   const mediaWarmed = useRef(false);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const index = sequence.indexOf(view);
   useEffect(() => {
     localStorage.setItem("for-u-sudd-progress", view);
@@ -169,6 +180,15 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const previousView = sequence[index - 1];
     if (previousView) go(previousView);
   }
+  function handleSwipeEnd(event: React.PointerEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || view === "quiz" || view === "preflight" || view === "closing") return;
+    const x = event.clientX - start.x;
+    const y = event.clientY - start.y;
+    if (Math.abs(x) < 56 || Math.abs(x) < Math.abs(y) * 1.4) return;
+    if (x < 0) next(); else previous();
+  }
   useEffect(() => {
     const onPop = () => {
       const target = window.location.hash.slice(1) as View;
@@ -183,10 +203,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     : undefined;
   const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const pauseMusicForVoice = () => audio.current?.pause();
-  const burstConfetti = () => {
+  const burstConfetti = useCallback(() => {
     setConfetti(true);
     setTimeout(() => setConfetti(false), 2400);
-  };
+  }, []);
   const resumeMusicAfterVoice = () => {
     if (!document.hidden && !muted)
       void audio.current?.play().catch(() => setMuted(true));
@@ -199,6 +219,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         const bounds = event.currentTarget.getBoundingClientRect();
         setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
       }}
+      onPointerDown={(event) => { swipeStart.current = { x: event.clientX, y: event.clientY }; }}
+      onPointerUp={handleSwipeEnd}
     >
       {showAmbient && (
         <div className="ambient-particles" aria-hidden="true">
@@ -224,9 +246,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         <span className="story-brand">
           for u, {content.participants.nickname.toLowerCase()}
         </span>
-        <span aria-live="polite">
-          {labels[view]} · {index + 1} / {sequence.length}
-        </span>
+        <div className="story-progress" aria-label={`${labels[view]}, ${index + 1} of ${sequence.length}`}>
+          {sequence.map((item, progressIndex) => <i key={item} className={progressIndex <= index ? "is-active" : ""} />)}
+        </div>
         <button
           className="icon-button"
           aria-label={muted ? "Turn music on" : "Mute music"}
@@ -246,10 +268,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         >
           {view === "preflight" && <Preflight onReady={() => go("start")} />}
           {view === "start" && <Start onBegin={() => { setMuted(false); go("welcome"); }} />}
-          {view === "welcome" && <Welcome content={content} onNext={next} />}
-          {view === "countdown" && (
-            <Countdown birthday={content.project.birthday} onNext={next} />
-          )}
+          {view === "welcome" && <Welcome content={content} />}
+          {view === "countdown" && <Countdown birthday={content.project.birthday} />}
           {view === "chapters" && (
             <Chapter
               chapter={content.chapters[chapter]}
@@ -258,9 +278,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               )}
             />
           )}
-          {view === "albums" && (
-            <Albums content={content} onOpen={setMediaId} />
-          )}
+          {view === "numbers" && <OurNumbers content={content} />}
+          {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
           {view === "videos" && (
             <Videos
               content={content}
@@ -273,8 +292,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               content={content}
               onForegroundPlay={pauseMusicForVoice}
               onForegroundEnd={resumeMusicAfterVoice}
+              onNext={next}
             />
           )}
+          {view === "voices" && <Voices content={content} onForegroundPlay={pauseMusicForVoice} onForegroundEnd={resumeMusicAfterVoice} />}
           {view === "quiz" && (
             <Quiz
               item={content.quiz[quiz]}
@@ -302,14 +323,15 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "final-note" && (
             <FinalNote content={content} onOpen={setMediaId} />
           )}
+          {view === "final-photo" && <FinalPhoto content={content} />}
           {view === "cake" && <Cake onNext={next} />}
           {view === "gift" && (
-            <Gift onOpen={burstConfetti} />
+            <Gift onOpen={burstConfetti} onNext={next} />
           )}
           {view === "ending" && (
             <Ending
               content={content}
-              onNext={next}
+              onFirework={burstConfetti}
               onSecret={() => go("secret")}
               onReplay={() => {
                 localStorage.removeItem("for-u-sudd-progress");
@@ -319,6 +341,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               }}
             />
           )}
+          {view === "closing" && <Closing />}
           {view === "secret" && (
             <SecretAlbum
               content={content}
@@ -328,20 +351,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           )}
         </motion.section>
       </AnimatePresence>
-      {view !== "start" && view !== "ending" && view !== "quiz" && (
-        <nav className="story-nav" aria-label="Story navigation">
-          <button
-            className="secondary"
-            onClick={previous}
-            disabled={index === 0}
-          >
-            <ArrowLeft aria-hidden="true" /> Back
-          </button>
-          {index < sequence.length - 1 && <button className="primary" onClick={next}>
-            Continue <ArrowRight aria-hidden="true" />
-          </button>}
-        </nav>
-      )}
+      {view !== "quiz" && view !== "closing" && <p className="swipe-hint" aria-hidden="true">Swipe to wander through the memories</p>}
       <AnimatePresence>
         {active?.kind === "image" && (
           <MediaOverlay media={active} onClose={() => setMediaId(null)} />
@@ -354,24 +364,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
 function Preflight({ onReady }: { onReady: () => void }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 420);
+    const timer = setTimeout(() => setReady(true), 1200);
     return () => clearTimeout(timer);
   }, []);
   return (
     <div className="poster preflight">
       <Heart className="poster-heart" fill="currentColor" aria-hidden="true" />
-      <p className="eyebrow">loading memories</p>
-      <h1>{ready ? "Ready when you are." : "Just a moment…"}</h1>
-      <p>
-        {ready
-          ? "The first memory is waiting."
-          : "Preparing only the next small piece of your story."}
-      </p>
-      {ready && (
-        <button className="primary" onClick={onReady}>
-          Continue <ArrowRight />
-        </button>
-      )}
+      <p className="eyebrow">a little heartbeat</p>
+      <h1>{ready ? "Every love story has a beginning." : ""}</h1>
+      {ready && <p>Ours started with a single message.</p>}
+      <button className="screen-tap" onClick={onReady} aria-label="Reveal the story" />
     </div>
   );
 }
@@ -383,25 +385,21 @@ function Start({
   return (
     <div className="poster start">
       <Heart className="poster-heart" fill="currentColor" aria-hidden="true" />
-      <p className="eyebrow">a private birthday story</p>
+      <p className="eyebrow">for u, {"sudd"}</p>
       <h1>
         For you,
         <br />
         <em>always.</em>
       </h1>
-      <p>One small journey made from the moments that matter.</p>
-      <button className="primary" onClick={onBegin}>
-        Tap to begin <ArrowRight aria-hidden="true" />
-      </button>
+      <p>Touch anywhere when you are ready.</p>
+      <button className="screen-tap" onClick={onBegin} aria-label="Begin the story" />
     </div>
   );
 }
 function Welcome({
   content,
-  onNext,
 }: {
   content: SafeContent;
-  onNext: () => void;
 }) {
   return (
     <div className="poster">
@@ -412,18 +410,14 @@ function Welcome({
         <em>{content.participants.nickname}.</em>
       </h1>
       <p className="lede">{content.greeting}</p>
-      <button className="primary" onClick={onNext}>
-        Begin our story <ArrowRight />
-      </button>
+      <p className="swipe-copy">Swipe left to begin</p>
     </div>
   );
 }
 function Countdown({
   birthday,
-  onNext,
 }: {
   birthday: string;
-  onNext: () => void;
 }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -464,9 +458,7 @@ function Countdown({
           <p>Let the celebration begin.</p>
         </>
       )}
-      <button className="primary" onClick={onNext}>
-        Continue <ArrowRight />
-      </button>
+      <p className="swipe-copy">Your next memory is one swipe away</p>
     </div>
   );
 }
@@ -490,6 +482,11 @@ function Chapter({
     </article>
   );
 }
+function OurNumbers({ content }: { content: SafeContent }) {
+  const [days] = useState(() => Math.max(1, Math.floor((Date.now() - new Date("2025-12-19T00:00:00+05:30").getTime()) / 86400000)));
+  const entries = [["♥", `${days} Days together`], ["✦", "18,342 Messages"], ["◌", `${content.chapters.length + content.albums.length} Memories here`], ["▷", `${content.videos.length} Videos`], ["∞", "1 Promise"], ["♥", "∞ Love"]];
+  return <section className="our-numbers"><p className="eyebrow">the little things add up</p><h1>Our <em>numbers.</em></h1><div>{entries.map(([mark, label], index) => <p key={label} style={{ animationDelay: `${index * 90}ms` }}><b>{mark}</b>{label}</p>)}</div></section>;
+}
 function Albums({
   content,
   onOpen,
@@ -498,7 +495,7 @@ function Albums({
   onOpen: (id: string) => void;
 }) {
   return (
-    <section className="collection">
+    <section className="collection polaroid-stack">
       <p className="eyebrow">the little things</p>
       <h1>Our photo album</h1>
       {content.albums.map((album) => (
@@ -510,7 +507,7 @@ function Albums({
               return (
                 media && (
                   <button
-                    className="photo-button"
+                    className="photo-button polaroid"
                     onClick={() => onOpen(id)}
                     key={id}
                   >
@@ -580,28 +577,34 @@ function Voice({
   content,
   onForegroundPlay,
   onForegroundEnd,
+  onNext,
 }: {
   content: SafeContent;
   onForegroundPlay: () => void;
   onForegroundEnd: () => void;
+  onNext: () => void;
 }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
   const media = content.voice.mediaId
     ? content.media.find((item) => item.id === content.voice.mediaId)
     : undefined;
   return (
-    <section className="voice">
-      <p className="eyebrow">a voice to keep</p>
+    <section className="voice voice-opening">
+      <p className="eyebrow">a message from me <Heart size={13} fill="currentColor" /></p>
       <h1>{content.voice.title}</h1>
       {media ? (
         <div className="inline-audio">
-          <audio
+          <audio ref={audio}
             src={`/api/media/${media.id}`}
-            controls
             preload="metadata"
-            onPlay={onForegroundPlay}
-            onPause={onForegroundEnd}
-            onEnded={onForegroundEnd}
+            onPlay={() => { setPlaying(true); onForegroundPlay(); }}
+            onPause={() => { setPlaying(false); onForegroundEnd(); }}
+            onEnded={() => { setPlaying(false); onForegroundEnd(); window.setTimeout(onNext, 500); }}
           />
+          <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => audio.current?.paused ? void audio.current.play() : audio.current?.pause()} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
+          <div className="wave" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 45}ms` }} />)}</div>
+          <p>{playing ? "Playing for you…" : "Tap to listen, or swipe when you are ready."}</p>
         </div>
       ) : (
         <Empty
@@ -611,6 +614,10 @@ function Voice({
       )}
     </section>
   );
+}
+function Voices({ content, onForegroundPlay, onForegroundEnd }: { content: SafeContent; onForegroundPlay: () => void; onForegroundEnd: () => void }) {
+  const media = content.voice.mediaId ? content.media.find((item) => item.id === content.voice.mediaId) : undefined;
+  return <section className="voice voices"><p className="eyebrow">kept close</p><h1>Voices that love you <em>♥</em></h1>{media ? <article className="voice-card"><span className="voice-avatar">R</span><div><strong>{content.participants.sender}</strong><small>From me</small></div><audio src={`/api/media/${media.id}`} controls preload="metadata" onPlay={onForegroundPlay} onPause={onForegroundEnd} onEnded={onForegroundEnd} /></article> : <Empty title="More voices are waiting" text="Add approved recordings here when they are ready." />}<p className="voice-note">Parents, friends, and family voices appear here as approved recordings are added.</p></section>;
 }
 function DatePicker({
   value,
@@ -771,6 +778,8 @@ function Quiz({
       setAccepted(true);
       setFeedback("That is right. ✦");
       onCorrect();
+      navigator.vibrate?.(15);
+      window.setTimeout(onNext, 900);
       return;
     }
     setAccepted(false);
@@ -808,9 +817,8 @@ function Quiz({
           />
         </>
       )}
-      <button className="primary" onClick={accepted ? onNext : submit}>
-        {accepted ? (final ? "Open the letter" : "Next question") : "Continue"}{" "}
-        <ArrowRight />
+      <button className="primary quiz-reveal" onClick={submit} disabled={accepted}>
+        {accepted ? "Memory unlocked" : "Reveal this memory"} <ArrowRight />
       </button>
       <p aria-live="polite" className="quiz-feedback">
         {feedback}
@@ -894,6 +902,10 @@ function FinalNote({ content, onOpen }: { content: SafeContent; onOpen: (id: str
     </article>
   );
 }
+function FinalPhoto({ content }: { content: SafeContent }) {
+  const photo = content.media.find((item) => item.id === "photo-last") ?? content.media.find((item) => item.kind === "image");
+  return <section className="final-photo"><p className="eyebrow">one more look</p>{photo && <MediaImage media={photo} />}<p>Always us.</p></section>;
+}
 function Cake({ onNext }: { onNext: () => void }) {
   const [lit, setLit] = useState(true);
   return (
@@ -901,11 +913,11 @@ function Cake({ onNext }: { onNext: () => void }) {
       <p className="eyebrow">make a wish</p>
       <button
         className={`cake-art ${lit ? "lit" : ""}`}
-        onClick={() => setLit(false)}
+        onClick={() => { setLit(false); navigator.vibrate?.(15); window.setTimeout(onNext, 1200); }}
         aria-label="Blow out the candle"
       >
         <span className="flame" />
-        🎂
+        <span className="cake-base"><i /><i /><i /></span>
       </button>
       <h1>{lit ? "Tap the candle" : "Wish made."}</h1>
       <p>
@@ -913,15 +925,10 @@ function Cake({ onNext }: { onNext: () => void }) {
           ? "Your tap is all it takes."
           : "May this year be as lovely as you are."}
       </p>
-      {!lit && (
-        <button className="primary" onClick={onNext}>
-          One more surprise <ArrowRight />
-        </button>
-      )}
     </section>
   );
 }
-function Gift({ onOpen }: { onOpen: () => void }) {
+function Gift({ onOpen, onNext }: { onOpen: () => void; onNext: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <section className="gift">
@@ -931,28 +938,31 @@ function Gift({ onOpen }: { onOpen: () => void }) {
         onClick={() => {
           setOpen(true);
           onOpen();
+          navigator.vibrate?.(15);
+          window.setTimeout(onNext, 1050);
         }}
         aria-label="Open your gift"
       >
-        🎁
+        <span className="gift-lid" /><span className="gift-ribbon" /><span className="gift-body" />
       </button>
       <h1>{open ? "A whole world of love." : "Open your gift."}</h1>
-      <p>{open ? "happy birthday shuttmani" : "Tap it — no shaking required."}</p>
+      <p>{open ? "happy birthday shuttmani" : "A little shake, then a tap."}</p>
     </section>
   );
 }
 function Ending({
   content,
-  onNext,
+  onFirework,
   onReplay,
   onSecret,
 }: {
   content: SafeContent;
-  onNext: () => void;
+  onFirework: () => void;
   onReplay: () => void;
   onSecret: () => void;
 }) {
   const [presses, setPresses] = useState(0);
+  useEffect(() => { onFirework(); }, [onFirework]);
   useEffect(() => {
     if (!presses) return;
     const timer = setTimeout(() => setPresses(0), 1500);
@@ -973,9 +983,7 @@ function Ending({
       <p className="eyebrow">the end, for now</p>
       <h1>{content.finale}</h1>
       <p>Thank you for being every little reason to celebrate.</p>
-      <button className="primary" onClick={onNext}>
-        One last note <ArrowRight aria-hidden="true" />
-      </button>
+      <p className="swipe-copy">One last memory is waiting</p>
       <button className="secondary" onClick={onReplay}>
         <RotateCcw /> Replay our story
       </button>
@@ -990,6 +998,9 @@ function Ending({
       )}
     </section>
   );
+}
+function Closing() {
+  return <section className="closing"><Heart fill="currentColor" aria-hidden="true" /><p>I&apos;ll always choose you.</p></section>;
 }
 function SecretAlbum({
   content,

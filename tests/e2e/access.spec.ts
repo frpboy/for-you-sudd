@@ -4,13 +4,11 @@ async function enterStory(page: import("@playwright/test").Page) {
   await expect(page).toHaveURL(/access/);
   await page.getByLabel("Passphrase").fill("demo");
   const accessResponse = page.waitForResponse("**/api/access");
-  await page.getByRole("button", { name: /open my story/i }).click();
+  await page.getByRole("button", { name: /open the next memory/i }).click();
   expect((await accessResponse).status()).toBe(200);
-  await page.getByLabel(/dream destination/i).fill("Switzerland");
-  await page.getByRole("button", { name: /^continue/i }).click();
   await expect(page).toHaveURL(/story/);
   await expect(
-    page.getByRole("heading", { name: /ready when you are/i }),
+    page.getByRole("button", { name: /play voice message/i }),
   ).toBeVisible();
 }
 async function answerDate(
@@ -25,7 +23,8 @@ async function answerDate(
   await page.getByRole("button", { name: "Choose year" }).click();
   await page.getByRole("button", { name: year, exact: true }).click();
   await page.getByRole("button", { name: `Select ${date}` }).click();
-  await page.getByRole("button", { name: /^continue/i }).click();
+  await page.getByRole("button", { name: /reveal this memory/i }).click();
+  await page.waitForTimeout(950);
 }
 test("protects the story and allows the private flow", async ({ page }) => {
   await enterStory(page);
@@ -116,7 +115,7 @@ test("keeps the quiz on the current question until its date is correct", async (
     .getByRole("button", { name: /^Select / })
     .first()
     .click();
-  await page.getByRole("button", { name: /^continue/i }).click();
+  await page.getByRole("button", { name: /reveal this memory/i }).click();
   await expect(
     page.getByText(/think of our december commitment/i),
   ).toBeVisible();
@@ -131,9 +130,9 @@ test("keeps the quiz on the current question until its date is correct", async (
   await page.getByRole("button", { name: "Choose year" }).click();
   await page.getByRole("button", { name: "2025", exact: true }).click();
   await page.getByRole("button", { name: "Select 26 December 2025" }).click();
-  await page.getByRole("button", { name: /^continue/i }).click();
+  await page.getByRole("button", { name: /reveal this memory/i }).click();
   await expect(
-    page.getByRole("button", { name: /next question/i }),
+    page.getByText(/memory unlocked/i),
   ).toBeVisible();
 });
 test("shows and selects the favourite-moment radio option", async ({ page }) => {
@@ -141,14 +140,11 @@ test("shows and selects the favourite-moment radio option", async ({ page }) => 
   await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
   await page.reload();
   await answerDate(page, "December", "2025", "26 December 2025");
-  await page.getByRole("button", { name: /next question/i }).click();
   await answerDate(page, "January", "2026", "6 January 2026");
-  await page.getByRole("button", { name: /next question/i }).click();
   await page.getByLabel("Your answer").fill("Switzerland");
-  await page.getByRole("button", { name: /^continue/i }).click();
-  await page.getByRole("button", { name: /next question/i }).click();
+  await page.getByRole("button", { name: /reveal this memory/i }).click();
+  await page.waitForTimeout(950);
   await answerDate(page, "December", "2025", "19 December 2025");
-  await page.getByRole("button", { name: /next question/i }).click();
   const choice = page.getByRole("radio", {
     name: "Spending time together after fights",
   });

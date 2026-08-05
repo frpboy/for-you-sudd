@@ -1,17 +1,14 @@
 "use client";
-import { FormEvent, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { ArrowRight, Heart, Volume2 } from "lucide-react";
-import { normalizeAnswer } from "@/lib/answer-normalization";
 
 export function AccessGate() {
-  const router = useRouter();
   const [passphrase, setPassphrase] = useState("");
-  const [authorized, setAuthorized] = useState(false);
-  const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [opening, setOpening] = useState(true);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { const timer = window.setTimeout(() => setOpening(false), 3100); return () => window.clearTimeout(timer); }, []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -31,20 +28,12 @@ export function AccessGate() {
       requestAnimationFrame(() => errorRef.current?.focus());
       return;
     }
-    setAuthorized(true);
-  }
-  function continueStory(event: FormEvent) {
-    event.preventDefault();
-    if (normalizeAnswer(answer) !== "switzerland") {
-      setError("A small hint: think snow-covered mountains.");
-      requestAnimationFrame(() => errorRef.current?.focus());
-      return;
-    }
     localStorage.removeItem("for-u-sudd-progress");
-    router.replace("/story");
+    window.location.assign("/story");
   }
   return (
     <main className="access-shell">
+      {opening && <section className="access-prologue" aria-live="polite"><Heart className="prologue-heart" fill="currentColor" aria-hidden="true" /><p>Every love story has a beginning.</p><span>Ours started with a single message.</span></section>}
       <div className="grain" aria-hidden="true" />
       <section className="access-content" aria-labelledby="access-title">
         <Heart className="mark" aria-hidden="true" fill="currentColor" />
@@ -57,8 +46,7 @@ export function AccessGate() {
         <p className="lede">
           This story is only for you. Enter the passphrase to begin.
         </p>
-        {!authorized ? (
-          <form onSubmit={submit} className="access-form">
+        <form onSubmit={submit} className="access-form">
             <label htmlFor="passphrase">Passphrase</label>
             <input
               id="passphrase"
@@ -70,31 +58,13 @@ export function AccessGate() {
               required
             />
             <button className="primary" disabled={busy}>
-              {busy ? (
-                "Opening…"
-              ) : (
+              {busy ? "Unlocking…" : (
                 <>
-                  Open my story <ArrowRight aria-hidden="true" />
+                  Open the next memory <ArrowRight aria-hidden="true" />
                 </>
               )}
             </button>
-          </form>
-        ) : (
-          <form onSubmit={continueStory} className="access-form">
-            <p className="success">Unlocked. One small question first.</p>
-            <label htmlFor="destination">What is our dream destination?</label>
-            <input
-              id="destination"
-              autoComplete="off"
-              value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
-              required
-            />
-            <button className="primary">
-              Continue <ArrowRight aria-hidden="true" />
-            </button>
-          </form>
-        )}
+        </form>
         <p className="form-error" ref={errorRef} tabIndex={-1} role="alert">
           {error}
         </p>
