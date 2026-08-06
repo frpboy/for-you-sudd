@@ -538,7 +538,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "final-note" && <FinalNote content={content} completed={completedViews.has("final-note")} onReady={() => completeView("final-note")} />}
           {view === "malayalam-letter" && <MalayalamLetter completed={completedViews.has("malayalam-letter")} onReady={() => completeView("malayalam-letter")} />}
           {view === "final-photo" && <FinalPhoto content={content} />}
-          {view === "cake" && <Cake completed={completedViews.has("cake")} onCelebrate={() => { celebrateCandle(); completeView("cake"); }} />}
+          {view === "cake" && <Cake completed={completedViews.has("cake")} onCelebrate={() => { celebrateCandle(); completeView("cake"); }} onNext={() => navigate("next")} />}
           {view === "gift" && (
             <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} />
           )}
@@ -1109,26 +1109,27 @@ function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady:
   }, [completed, layoutReady, lines, onReady]);
   return <div ref={paper} data-story-interactive className={`handwritten-paper${layoutReady ? " is-ready" : ""}`} aria-label={handwrittenLetter}>{lines.map((line, index) => <p key={`${index}-${line}`} ref={(element) => { refs.current[index] = element; }} style={{ "--ink-reveal": 0 } as React.CSSProperties}>{line || " "}</p>)}</div>;
 }
-function Cake({ completed, onCelebrate }: { completed: boolean; onCelebrate: () => void }) {
+function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebrate: () => void; onNext: () => void }) {
   const [lit, setLit] = useState(!completed);
   const isLit = lit && !completed;
+  const blowOut = () => {
+    if (!isLit) return;
+    setLit(false);
+    onCelebrate();
+    navigator.vibrate?.(15);
+    window.setTimeout(onNext, 1500);
+  };
   return (
     <section className="cake">
       <p className="eyebrow">make a wish</p>
-      <button
-        className={`cake-art ${isLit ? "lit" : ""}`}
-        onClick={() => { if (!isLit) return; setLit(false); onCelebrate(); navigator.vibrate?.(15); }}
-        aria-label="Blow out the candle"
-      >
-        <span className="flame" />
-        <span className="cake-base"><i /><i /><i /></span>
-      </button>
-      <h1>{isLit ? "Tap the candle" : "Wish made."}</h1>
-      <p>
-        {isLit
-          ? "Your tap is all it takes."
-          : "May this year be as lovely as you are."}
-      </p>
+      <div className={`cake-art ${isLit ? "lit" : ""}${isLit ? "" : " is-blown"}`} aria-label="Birthday cake with three candles">
+        <div className="cake-base"><span className="cake-icing" />
+          {[0, 1, 2].map((candle) => <span className="candle" key={candle}><button type="button" className="flame" onClick={blowOut} aria-label={`Blow out candle ${candle + 1}`}><span /></button><i /></span>)}
+          <span className="cake-smoke" aria-hidden="true"><i /><i /><i /></span>
+        </div>
+      </div>
+      <h1>{isLit ? "Tap a candle" : "Wish made."}</h1>
+      <p>{isLit ? "Make a wish... then tap the flame." : "May this year be as lovely as you are."}</p>
     </section>
   );
 }
