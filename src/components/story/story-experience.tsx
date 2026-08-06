@@ -2,7 +2,6 @@
 /* eslint-disable @next/next/no-img-element -- protected same-origin media endpoints cannot be optimized by Next/Image without exposing source keys. */
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
-  ArrowLeft,
   ArrowRight,
   Heart,
   Image as ImageIcon,
@@ -791,132 +790,36 @@ function VoiceCard({ media, number, title, description, duration, onPlayVoice, o
 function DatePicker({
   value,
   onChange,
+  month,
 }: {
   value: string;
   onChange: (value: string) => void;
+  month: Date;
 }) {
-  const [open, setOpen] = useState(false);
-  const [pickerView, setPickerView] = useState<"days" | "months" | "years">("days");
-  const [month, setMonth] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-  );
   const start = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const leading = start.getDay();
   const dateValue = (day: number) =>
     `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const selected = value
-    ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
-    : "No date selected";
-  const selectDate = (nextValue: string) => {
-    onChange(nextValue);
-    setOpen(false);
-  };
   return (
-    <div className="date-picker" aria-label="Date picker">
-      <button
-        type="button"
-        className="date-picker-trigger"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((current) => !current);
-          setPickerView("days");
-        }}
-      >
-        <span>{selected}</span>
-        <span aria-hidden="true">⌄</span>
-      </button>
-      {open && (
-        <div className="date-picker-panel">
-          <div className="date-calendar">
-            <div className="date-calendar-header">
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Previous month"
-                onClick={() =>
-                  setMonth(
-                    (current) =>
-                      new Date(
-                        current.getFullYear(),
-                        current.getMonth() - 1,
-                        1,
-                      ),
-                  )
-                }
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <div className="date-calendar-title" aria-live="polite">
-                <button type="button" aria-label="Choose month" onClick={() => setPickerView("months")}>{month.toLocaleDateString("en-IN", { month: "long" })}</button>
-                <button type="button" aria-label="Choose year" onClick={() => setPickerView("years")}>{month.getFullYear()}</button>
-              </div>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Next month"
-                onClick={() =>
-                  setMonth(
-                    (current) =>
-                      new Date(
-                        current.getFullYear(),
-                        current.getMonth() + 1,
-                        1,
-                      ),
-                  )
-                }
-              >
-                <ArrowRight size={18} />
-              </button>
-            </div>
-            {pickerView === "months" && <div className="date-choice-grid">{Array.from({ length: 12 }, (_, index) => {
-              const name = new Date(2026, index, 1).toLocaleDateString("en-IN", { month: "long" });
-              return <button type="button" key={name} aria-pressed={month.getMonth() === index} onClick={() => { setMonth(new Date(month.getFullYear(), index, 1)); setPickerView("days"); }}>{name}</button>;
-            })}</div>}
-            {pickerView === "years" && <div className="date-choice-grid date-year-grid">{Array.from({ length: 13 }, (_, index) => {
-              const year = 2020 + index;
-              return <button type="button" key={year} aria-pressed={month.getFullYear() === year} onClick={() => { setMonth(new Date(year, month.getMonth(), 1)); setPickerView("days"); }}>{year}</button>;
-            })}</div>}
-            {pickerView === "days" && <><div className="date-weekdays" aria-hidden="true">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <span key={day}>{day}</span>
-              ))}
-            </div>
-            <div className="date-days">
-              {Array.from({ length: leading }, (_, index) => (
-                <span key={`empty-${index}`} />
-              ))}
-              {Array.from({ length: days }, (_, index) => {
-                const day = index + 1;
-                const nextValue = dateValue(day);
-                const accessibleDate = new Date(
-                  `${nextValue}T00:00:00`,
-                ).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                });
-                return (
-                  <button
-                    type="button"
-                    key={nextValue}
-                    aria-label={`Select ${accessibleDate}`}
-                    aria-pressed={value === nextValue}
-                    className={value === nextValue ? "selected" : ""}
-                    onClick={() => selectDate(nextValue)}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
-            </div></>}
+    <div className="date-picker" aria-label={`${month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })} memory calendar`}>
+      <div className="date-picker-panel">
+        <div className="date-calendar">
+          <p className="date-calendar-title">{month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</p>
+          <div className="date-weekdays" aria-hidden="true">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
+          </div>
+          <div className="date-days">
+            {Array.from({ length: leading }, (_, index) => <span key={`empty-${index}`} />)}
+            {Array.from({ length: days }, (_, index) => {
+              const day = index + 1;
+              const nextValue = dateValue(day);
+              const accessibleDate = new Date(`${nextValue}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+              return <button type="button" key={nextValue} aria-label={`Select ${accessibleDate}`} aria-pressed={value === nextValue} className={value === nextValue ? "selected" : ""} onClick={() => onChange(nextValue)}>{day}</button>;
+            })}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -940,31 +843,40 @@ function Quiz({
   const dateQuestion = item.acceptedAnswers.some((value) =>
     /^\d{4}-\d{2}-\d{2}$/.test(value),
   );
+  const expectedDate = item.acceptedAnswers.find((value) => /^\d{4}-\d{2}-\d{2}$/.test(value));
+  const accept = () => {
+    setAccepted(true);
+    setFeedback("That is right. ✦");
+    onCorrect();
+    navigator.vibrate?.(15);
+    if (!final) window.setTimeout(onNext, 900);
+  };
   const updateAnswer = (value: string) => {
     setAnswer(value);
-      if (!completed) setAccepted(false);
+    if (!completed) setAccepted(false);
     setFeedback("");
+  };
+  const selectDate = (value: string) => {
+    updateAnswer(value);
+    if (matchesAnswer(value, item.acceptedAnswers)) accept();
   };
   const submit = () => {
     if (matchesAnswer(answer, item.acceptedAnswers)) {
-      setAccepted(true);
-      setFeedback("That is right. ✦");
-      onCorrect();
-      navigator.vibrate?.(15);
-      if (!final) window.setTimeout(onNext, 900);
+      accept();
       return;
     }
     setAccepted(false);
     setFeedback(
-      item.hint ? `Not quite — ${item.hint}` : "Not quite — try again.",
+      dateQuestion ? "Not quite... think back a little more ❤️" : item.hint ? `Not quite — ${item.hint}` : "Not quite — try again.",
     );
   };
   return (
     <section className="quiz">
       <p className="eyebrow">a question for you</p>
       <h1>{item.question}</h1>
+      {item.id === "commitment-date" && <p className="quiz-helper">Pick the day you think we officially became us ❤️</p>}
       {dateQuestion ? (
-        <DatePicker value={answer} onChange={updateAnswer} />
+        <DatePicker value={answer} onChange={selectDate} month={new Date(`${expectedDate ?? "2025-12-01"}T00:00:00`)} />
       ) : item.choices ? (
         <fieldset className="quiz-options">
           <legend className="sr-only">Choose your answer</legend>
@@ -989,7 +901,7 @@ function Quiz({
           />
         </>
       )}
-      <button className="primary quiz-reveal" onClick={submit} disabled={isAccepted}>
+      <button className="primary quiz-reveal" onClick={submit} disabled={!answer || isAccepted}>
         {isAccepted ? "Memory unlocked" : "Reveal this memory"} <ArrowRight />
       </button>
       <p aria-live="polite" className="quiz-feedback">

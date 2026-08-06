@@ -15,13 +15,9 @@ async function answerDate(
   year: string,
   date: string,
 ) {
-  await page.locator(".date-picker-trigger").click();
-  await page.getByRole("button", { name: "Choose month" }).click();
-  await page.getByRole("button", { name: month, exact: true }).click();
-  await page.getByRole("button", { name: "Choose year" }).click();
-  await page.getByRole("button", { name: year, exact: true }).click();
+  void month;
+  void year;
   await page.getByRole("button", { name: `Select ${date}` }).click();
-  await page.getByRole("button", { name: /reveal this memory/i }).click();
   await page.waitForTimeout(950);
 }
 test("protects the story and allows the private flow", async ({ page }) => {
@@ -145,27 +141,20 @@ test("keeps the quiz on the current question until its date is correct", async (
   await expect(
     page.getByRole("navigation", { name: /story navigation/i }),
   ).toHaveCount(0);
-  await page.locator(".date-picker-trigger").click();
   await page
     .getByRole("button", { name: /^Select / })
     .first()
     .click();
   await page.getByRole("button", { name: /reveal this memory/i }).click();
   await expect(
-    page.getByText(/think of our december commitment/i),
+    page.getByText(/not quite\.\.\. think back a little more/i),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", {
       name: /when did we become officially committed/i,
     }),
   ).toBeVisible();
-  await page.locator(".date-picker-trigger").click();
-  await page.getByRole("button", { name: "Choose month" }).click();
-  await page.getByRole("button", { name: "December", exact: true }).click();
-  await page.getByRole("button", { name: "Choose year" }).click();
-  await page.getByRole("button", { name: "2025", exact: true }).click();
   await page.getByRole("button", { name: "Select 26 December 2025" }).click();
-  await page.getByRole("button", { name: /reveal this memory/i }).click();
   await expect(
     page.getByText(/memory unlocked/i),
   ).toBeVisible();

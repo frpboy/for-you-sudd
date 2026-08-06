@@ -121,6 +121,13 @@
   color: #fff;
   box-shadow: 0 5px 12px #5b75534d;
 }
+.date-picker .date-picker-panel { margin-top: 0; padding: 10px 12px; border-radius: 18px; }
+.date-picker .date-calendar-title { margin: 0; color: var(--deep); font-family: Georgia, serif; font-size: 1.04rem; font-weight: 500; text-align: center; }
+.date-picker .date-days button { min-height: 36px; }
+.date-picker .date-days button.selected { animation: selected-memory .7s ease both; }
+.quiz-helper { margin: -4px 0 14px; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+@keyframes selected-memory { 45% { transform: scale(1.14); box-shadow: 0 0 0 8px #a8c7a04a; } }
+@media (max-width: 390px) { .date-picker .date-picker-panel { padding: 8px; } .date-picker .date-days button { min-height: 33px; } .date-picker .date-weekdays span { font-size: .6rem; } }
 .media-image {
   position: relative;
   width: 100%;
