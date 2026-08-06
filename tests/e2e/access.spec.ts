@@ -18,6 +18,7 @@ async function answerDate(
   void month;
   void year;
   await page.getByRole("button", { name: `Select ${date}` }).click();
+  await page.getByRole("button", { name: /memory unlocked/i }).click();
   await page.waitForTimeout(950);
 }
 test("protects the story and allows the private flow", async ({ page }) => {

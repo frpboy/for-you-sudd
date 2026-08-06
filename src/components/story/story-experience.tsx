@@ -305,12 +305,13 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     else if (storyShell.current) storyShell.current.scrollTop = 0;
   }, [view]);
   function navigate(direction: "next" | "previous") {
-    if (direction === "next" && view === "quiz" && !completedViews.has("quiz")) return;
-    if (navigationLocked.current) return;
+    if (direction === "next" && view === "quiz" && !completedViews.has("quiz")) return false;
+    if (navigationLocked.current) return false;
     navigationLocked.current = true;
     window.setTimeout(() => { navigationLocked.current = false; }, 800);
     navigator.vibrate?.(6);
     if (direction === "next") next(); else previous();
+    return true;
   }
   function handleSwipeEnd(event: React.PointerEvent<HTMLElement>) {
     handleGestureEnd(event.clientX, event.clientY);
@@ -519,7 +520,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               onNext={() =>
                 quiz < content.quiz.length - 1
                   ? setQuiz((value) => value + 1)
-                  : navigate("next")
+                  : (() => { if (!navigate("next")) throw new Error("Story navigation was locked after quiz completion."); })()
               }
             />
           )}
@@ -843,6 +844,7 @@ function Quiz({
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [accepted, setAccepted] = useState(completed);
+  const advanced = useRef(false);
   const isAccepted = accepted || completed;
   const dateQuestion = item.acceptedAnswers.some((value) =>
     /^\d{4}-\d{2}-\d{2}$/.test(value),
@@ -853,7 +855,6 @@ function Quiz({
     setFeedback("That is right. ✦");
     onCorrect();
     navigator.vibrate?.(15);
-    if (!final) window.setTimeout(onNext, 900);
   };
   const updateAnswer = (value: string) => {
     setAnswer(value);
@@ -873,6 +874,20 @@ function Quiz({
     setFeedback(
       dateQuestion ? "Not quite... think back a little more ❤️" : item.hint ? `Not quite — ${item.hint}` : "Not quite — try again.",
     );
+  };
+  const unlock = () => {
+    if (!isAccepted) {
+      submit();
+      return;
+    }
+    if (advanced.current) return;
+    advanced.current = true;
+    try {
+      onNext();
+    } catch (error) {
+      advanced.current = false;
+      console.error("Quiz Memory unlocked navigation failed:", error);
+    }
   };
   return (
     <section className="quiz">
@@ -905,7 +920,7 @@ function Quiz({
           />
         </>
       )}
-      <button className="primary quiz-reveal" onClick={submit} disabled={!answer || isAccepted}>
+      <button className="primary quiz-reveal" onClick={unlock} disabled={!answer && !isAccepted}>
         {isAccepted ? "Memory unlocked" : "Reveal this memory"} <ArrowRight />
       </button>
       <p aria-live="polite" className="quiz-feedback">
@@ -1123,10 +1138,9 @@ function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebr
     <section className="cake">
       <p className="eyebrow">make a wish</p>
       <div className={`cake-art ${isLit ? "lit" : ""}${isLit ? "" : " is-blown"}`} aria-label="Birthday cake with three candles">
-        <div className="cake-base"><span className="cake-icing" />
-          {[0, 1, 2].map((candle) => <span className="candle" key={candle}><button type="button" className="flame" onClick={blowOut} aria-label={`Blow out candle ${candle + 1}`}><span /></button><i /></span>)}
-          <span className="cake-smoke" aria-hidden="true"><i /><i /><i /></span>
-        </div>
+        <img className="cake-illustration" src="/birthday-cake-illustration.png" alt="Elegant pastel birthday cake with three candles" />
+        {[0, 1, 2].map((candle) => <button type="button" className={`flame flame-${candle + 1}`} key={candle} onClick={blowOut} aria-label={`Blow out candle ${candle + 1}`}><span /></button>)}
+        <span className="cake-smoke" aria-hidden="true"><i /><i /><i /></span>
       </div>
       <h1>{isLit ? "Tap a candle" : "Wish made."}</h1>
       <p>{isLit ? "Make a wish... then tap the flame." : "May this year be as lovely as you are."}</p>
