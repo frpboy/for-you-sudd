@@ -112,6 +112,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [confetti, setConfetti] = useState(false);
   const [videosReady, setVideosReady] = useState(false);
   const [finaleReady, setFinaleReady] = useState(false);
+  const [completedViews, setCompletedViews] = useState<Set<View>>(() => new Set());
+  const [visitedViews, setVisitedViews] = useState<Set<View>>(() => new Set());
+  const [activity, setActivity] = useState(0);
   const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
   const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
@@ -127,6 +130,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const heartCount = useRef(0);
   const restoredProgress = useRef(false);
   const ambientStarted = useRef(false);
+  const idleTimer = useRef<number | null>(null);
+  const autoAdvance = useRef<() => void>(() => undefined);
   const index = sequence.indexOf(view);
   const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
@@ -248,10 +253,23 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     };
   }, [ambientEnabled]);
   function go(next: View) {
+    setVisitedViews((current) => current.has(view) ? current : new Set(current).add(view));
     setFinaleReady(false);
     setView(next);
     window.history.pushState({ story: next }, "", `#${next}`);
   }
+  const completeView = useCallback((completed: View) => {
+    setCompletedViews((current) => current.has(completed) ? current : new Set(current).add(completed));
+    if (completed === "final-note" || completed === "malayalam-letter") setFinaleReady(true);
+  }, []);
+  const requiresCompletion = view === "voice" || view === "voices" || view === "quiz" || view === "final-note" || view === "malayalam-letter" || view === "cake" || view === "gift";
+  const pageReady = !requiresCompletion || completedViews.has(view);
+  const noteActivity = useCallback(() => setActivity((current) => current + 1), []);
+  useEffect(() => {
+    if (!pageReady || view === "ending" || view === "preflight") return;
+    idleTimer.current = window.setTimeout(() => autoAdvance.current(), 30_000);
+    return () => { if (idleTimer.current) window.clearTimeout(idleTimer.current); };
+  }, [activity, pageReady, view]);
   function next() {
     if (view === "chapters" && chapter < content.chapters.length - 1) {
       setChapter((value) => value + 1);
@@ -260,6 +278,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const nextView = sequence[index + 1];
     if (nextView) go(nextView);
   }
+  autoAdvance.current = next;
   function previous() {
     if (view === "chapters" && chapter > 0) {
       setChapter((value) => value - 1);
@@ -298,12 +317,12 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   function handleGestureEnd(clientX: number, clientY: number) {
     const start = swipeStart.current;
     swipeStart.current = null;
-    if (!start || mediaId || view === "quiz" || view === "preflight") return;
+    if (!start || mediaId || view === "preflight") return;
     const x = clientX - start.x;
     const y = clientY - start.y;
     const velocity = Math.abs(x) / Math.max(1, performance.now() - start.time);
     if (Math.abs(y) > Math.abs(x) * 1.35 && ["letter", "final-note", "malayalam-letter"].includes(view)) return;
-    if (["final-note", "malayalam-letter"].includes(view) && !finaleReady) return;
+    if (["final-note", "malayalam-letter"].includes(view) && !finaleReady && !completedViews.has(view)) return;
     if (Math.abs(y) > Math.abs(x) * 1.35 && (view === "albums" || view === "videos")) {
       const shell = storyShell.current;
       if (shell && Math.abs(y) >= 80) {
@@ -321,11 +340,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       ignoreNextTap.current = false;
       return;
     }
-    if (mediaId || view === "quiz" || view === "preflight" || (["final-note", "malayalam-letter"].includes(view) && !finaleReady)) return;
+    if (mediaId || view === "preflight" || (["final-note", "malayalam-letter"].includes(view) && !finaleReady && !completedViews.has(view))) return;
     if ((event.target as HTMLElement).closest("[data-story-interactive], button, input, label, audio, video, select, textarea, a")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const position = (event.clientX - bounds.left) / bounds.width;
-    const edge = view === "albums" || view === "videos" ? 0.05 : 0.3;
+    const edge = view === "albums" || view === "videos" || (view === "voice" && activeVoice.current && !activeVoice.current.paused) ? 0.05 : 0.3;
     if (position <= edge) navigate("previous");
     if (position >= 1 - edge) navigate("next");
   }
@@ -386,7 +405,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     <main
       ref={storyShell}
       className={`story-shell${view === "albums" || view === "videos" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
+      onPointerDownCapture={noteActivity}
+      onKeyDownCapture={noteActivity}
+      onScrollCapture={noteActivity}
       onClickCapture={(event) => {
+        noteActivity();
         if (!event.detail) return;
         const bounds = event.currentTarget.getBoundingClientRect();
         setTapPulse({ x: event.clientX - bounds.left, y: event.clientY - bounds.top, id: Date.now() });
@@ -457,7 +480,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         <motion.section
           key={view + chapter + quiz}
           className={`story-view${view === "videos" ? " is-video-placeholder" : ""}`}
-          initial={reduced ? { opacity: 0 } : { opacity: 0, y: 18 }}
+          initial={reduced || visitedViews.has(view) ? false : { opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
           transition={{ duration: reduced ? 0.15 : 0.72 }}
@@ -481,15 +504,17 @@ export function StoryExperience({ content }: { content: SafeContent }) {
               content={content}
               onPlayVoice={playVoice}
               onVoiceEnded={voiceEnded}
-              onNext={() => navigate("next")}
+              completed={completedViews.has("voice")}
+              onComplete={() => completeView("voice")}
             />
           )}
-          {view === "voices" && <Voices content={content} onPlayVoice={playVoice} onVoiceEnded={voiceEnded} onComplete={() => navigate("next")} />}
+          {view === "voices" && <Voices content={content} onPlayVoice={playVoice} onVoiceEnded={voiceEnded} onComplete={() => completeView("voices")} />}
           {view === "quiz" && (
             <Quiz
               item={content.quiz[quiz]}
               final={quiz === content.quiz.length - 1}
-              onCorrect={burstConfetti}
+              completed={completedViews.has("quiz")}
+              onCorrect={() => { burstConfetti(); if (quiz === content.quiz.length - 1) completeView("quiz"); }}
               onNext={() =>
                 quiz < content.quiz.length - 1
                   ? setQuiz((value) => value + 1)
@@ -509,12 +534,12 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "letter" && (
             <Letter content={content} onOpen={setMediaId} />
           )}
-          {view === "final-note" && <FinalNote content={content} onReady={unlockFinale} />}
-          {view === "malayalam-letter" && <MalayalamLetter onReady={() => go("ending")} />}
+          {view === "final-note" && <FinalNote content={content} completed={completedViews.has("final-note")} onReady={() => completeView("final-note")} />}
+          {view === "malayalam-letter" && <MalayalamLetter completed={completedViews.has("malayalam-letter")} onReady={() => completeView("malayalam-letter")} />}
           {view === "final-photo" && <FinalPhoto content={content} />}
-          {view === "cake" && <Cake onCelebrate={celebrateCandle} onNext={() => navigate("next")} />}
+          {view === "cake" && <Cake completed={completedViews.has("cake")} onCelebrate={() => { celebrateCandle(); completeView("cake"); }} />}
           {view === "gift" && (
-            <Gift onOpen={burstConfetti} onNext={() => navigate("next")} />
+            <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} />
           )}
           {view === "ending" && <Ending />}
           {view === "secret" && (
@@ -714,12 +739,14 @@ function Voice({
   content,
   onPlayVoice,
   onVoiceEnded,
-  onNext,
+  completed,
+  onComplete,
 }: {
   content: SafeContent;
   onPlayVoice: (voice: HTMLAudioElement) => void;
   onVoiceEnded: (voice: HTMLAudioElement) => void;
-  onNext: () => void;
+  completed: boolean;
+  onComplete: () => void;
 }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -737,11 +764,11 @@ function Voice({
             preload="metadata"
             onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }}
             onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }}
-            onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); window.setTimeout(onNext, 500); }}
+            onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); onComplete(); }}
           />
           <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
           <div className="wave" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 45}ms` }} />)}</div>
-          <p>{playing ? "Playing for you…" : "Close your eyes for a moment and just listen."}</p>
+          <p>{playing ? "Playing for you…" : completed ? "A little voice to keep close." : "Close your eyes for a moment and just listen."}</p>
         </div>
       ) : (
         <Empty
@@ -896,23 +923,26 @@ function DatePicker({
 function Quiz({
   item,
   final,
+  completed,
   onCorrect,
   onNext,
 }: {
   item: StoryContent["quiz"][number];
   final: boolean;
+  completed: boolean;
   onCorrect: () => void;
   onNext: () => void;
 }) {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [accepted, setAccepted] = useState(false);
+  const [accepted, setAccepted] = useState(completed);
+  const isAccepted = accepted || completed;
   const dateQuestion = item.acceptedAnswers.some((value) =>
     /^\d{4}-\d{2}-\d{2}$/.test(value),
   );
   const updateAnswer = (value: string) => {
     setAnswer(value);
-    setAccepted(false);
+      if (!completed) setAccepted(false);
     setFeedback("");
   };
   const submit = () => {
@@ -921,7 +951,7 @@ function Quiz({
       setFeedback("That is right. ✦");
       onCorrect();
       navigator.vibrate?.(15);
-      window.setTimeout(onNext, 900);
+      if (!final) window.setTimeout(onNext, 900);
       return;
     }
     setAccepted(false);
@@ -959,8 +989,8 @@ function Quiz({
           />
         </>
       )}
-      <button className="primary quiz-reveal" onClick={submit} disabled={accepted}>
-        {accepted ? "Memory unlocked" : "Reveal this memory"} <ArrowRight />
+      <button className="primary quiz-reveal" onClick={submit} disabled={isAccepted}>
+        {isAccepted ? "Memory unlocked" : "Reveal this memory"} <ArrowRight />
       </button>
       <p aria-live="polite" className="quiz-feedback">
         {feedback}
@@ -1027,12 +1057,12 @@ function Letter({
     </article>
   );
 }
-function FinalNote({ content, onReady }: { content: SafeContent; onReady: () => void }) {
+function FinalNote({ content, completed, onReady }: { content: SafeContent; completed: boolean; onReady: () => void }) {
   return (
     <article className="letter final-note">
       <p className="eyebrow">one last note</p>
       <h1>For you, {content.participants.nickname}.</h1>
-      <HandwrittenPaper onReady={onReady} />
+      <HandwrittenPaper completed={completed} onReady={onReady} />
       <footer>{content.letter.signature}</footer>
     </article>
   );
@@ -1058,10 +1088,14 @@ And once again happy birthday shuttmani May you have a happy and blessed day
 I'm always here to support you, to stand by your side in difficult times and to celebrate with you in happy times Thank you for making everything good for me
 Stay happy and healthy my dear shuttmaniii`;
 const handwrittenLines = handwrittenLetter.split("\n");
-function MalayalamLetter({ onReady }: { onReady: () => void }) {
+function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
   useEffect(() => {
+    if (completed) {
+      if (text.current) text.current.textContent = malayalamLetter;
+      return;
+    }
     if (text.current) text.current.textContent = "";
     cursor.current?.classList.remove("is-fading");
     const [body, quote] = malayalamLetter.split("\n\n");
@@ -1091,10 +1125,10 @@ function MalayalamLetter({ onReady }: { onReady: () => void }) {
     };
     frame = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [onReady]);
+  }, [completed, onReady]);
   return <article className="finale-letter malayalam-letter"><p className="eyebrow">from my heart</p><p className="typed-letter" aria-label={malayalamLetter}><span ref={text} /><span ref={cursor} className="typing-cursor" aria-hidden="true" /></p></article>;
 }
-function HandwrittenPaper({ onReady }: { onReady: () => void }) {
+function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const paper = useRef<HTMLDivElement>(null);
   const refs = useRef<Array<HTMLParagraphElement | null>>([]);
   const [lines, setLines] = useState(handwrittenLines);
@@ -1131,6 +1165,10 @@ function HandwrittenPaper({ onReady }: { onReady: () => void }) {
   }, []);
   useEffect(() => {
     if (!layoutReady) return;
+    if (completed) {
+      refs.current.forEach((element) => element?.style.setProperty("--ink-reveal", "1"));
+      return;
+    }
     let line = 0;
     let started = performance.now();
     const writingDuration = (value: string) => Math.max(700, value.length * 34 + (value.match(/[,.]/g)?.length ?? 0) * 110 + Math.random() * 100);
@@ -1152,51 +1190,52 @@ function HandwrittenPaper({ onReady }: { onReady: () => void }) {
     };
     frame = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [layoutReady, lines, onReady]);
+  }, [completed, layoutReady, lines, onReady]);
   return <div ref={paper} data-story-interactive className={`handwritten-paper${layoutReady ? " is-ready" : ""}`} aria-label={handwrittenLetter}>{lines.map((line, index) => <p key={`${index}-${line}`} ref={(element) => { refs.current[index] = element; }} style={{ "--ink-reveal": 0 } as React.CSSProperties}>{line || " "}</p>)}</div>;
 }
-function Cake({ onCelebrate, onNext }: { onCelebrate: () => void; onNext: () => void }) {
-  const [lit, setLit] = useState(true);
+function Cake({ completed, onCelebrate }: { completed: boolean; onCelebrate: () => void }) {
+  const [lit, setLit] = useState(!completed);
+  const isLit = lit && !completed;
   return (
     <section className="cake">
       <p className="eyebrow">make a wish</p>
       <button
-        className={`cake-art ${lit ? "lit" : ""}`}
-        onClick={() => { if (!lit) return; setLit(false); onCelebrate(); navigator.vibrate?.(15); window.setTimeout(onNext, 1200); }}
+        className={`cake-art ${isLit ? "lit" : ""}`}
+        onClick={() => { if (!isLit) return; setLit(false); onCelebrate(); navigator.vibrate?.(15); }}
         aria-label="Blow out the candle"
       >
         <span className="flame" />
         <span className="cake-base"><i /><i /><i /></span>
       </button>
-      <h1>{lit ? "Tap the candle" : "Wish made."}</h1>
+      <h1>{isLit ? "Tap the candle" : "Wish made."}</h1>
       <p>
-        {lit
+        {isLit
           ? "Your tap is all it takes."
           : "May this year be as lovely as you are."}
       </p>
     </section>
   );
 }
-function Gift({ onOpen, onNext }: { onOpen: () => void; onNext: () => void }) {
-  const [open, setOpen] = useState(false);
+function Gift({ completed, onOpen }: { completed: boolean; onOpen: () => void }) {
+  const [open, setOpen] = useState(completed);
+  const isOpen = open || completed;
   return (
     <section className="gift">
       <p className="eyebrow">one last thing</p>
       <button
-        className={`gift-box ${open ? "open" : ""}`}
+        className={`gift-box ${isOpen ? "open" : ""}`}
         onClick={() => {
-          if (open) return;
+          if (isOpen) return;
           setOpen(true);
           onOpen();
           navigator.vibrate?.(15);
-          window.setTimeout(onNext, 1050);
         }}
         aria-label="Open your gift"
       >
         <span className="gift-lid" /><span className="gift-ribbon" /><span className="gift-body" />
       </button>
-      <h1>{open ? "A whole world of love." : "Open your gift."}</h1>
-      <p>{open ? "happy birthday shuttmani" : "A little shake, then a tap."}</p>
+      <h1>{isOpen ? "A whole world of love." : "Open your gift."}</h1>
+      <p>{isOpen ? "happy birthday shuttmani" : "A little shake, then a tap."}</p>
     </section>
   );
 }
