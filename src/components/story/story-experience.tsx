@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- protected same-origin media endpoints cannot be optimized by Next/Image without exposing source keys. */
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
+  ArrowLeft,
   ArrowRight,
   Heart,
   Image as ImageIcon,
@@ -796,30 +797,32 @@ function DatePicker({
   onChange: (value: string) => void;
   month: Date;
 }) {
-  const start = new Date(month.getFullYear(), month.getMonth(), 1);
-  const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const [open, setOpen] = useState(false);
+  const [pickerView, setPickerView] = useState<"days" | "months" | "years">("days");
+  const [displayedMonth, setDisplayedMonth] = useState(() => new Date(month.getFullYear(), month.getMonth(), 1));
+  const start = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth(), 1);
+  const days = new Date(displayedMonth.getFullYear(), displayedMonth.getMonth() + 1, 0).getDate();
   const leading = start.getDay();
   const dateValue = (day: number) =>
-    `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    `${displayedMonth.getFullYear()}-${String(displayedMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const selected = value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Select a day";
   return (
-    <div className="date-picker" aria-label={`${month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })} memory calendar`}>
-      <div className="date-picker-panel">
+    <div className="date-picker" aria-label={`${displayedMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })} memory calendar`}>
+      <button type="button" className="date-picker-trigger" aria-expanded={open} onClick={() => { setOpen((current) => !current); setPickerView("days"); }}>
+        <span>{selected}</span><span aria-hidden="true">⌄</span>
+      </button>
+      {open && <div className="date-picker-panel">
         <div className="date-calendar">
-          <p className="date-calendar-title">{month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</p>
-          <div className="date-weekdays" aria-hidden="true">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}
+          <div className="date-calendar-header">
+            <button type="button" className="icon-button" aria-label="Previous month" onClick={() => setDisplayedMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><ArrowLeft size={18} /></button>
+            <div className="date-calendar-title" aria-live="polite"><button type="button" aria-label="Choose month" onClick={() => setPickerView("months")}>{displayedMonth.toLocaleDateString("en-IN", { month: "long" })}</button><button type="button" aria-label="Choose year" onClick={() => setPickerView("years")}>{displayedMonth.getFullYear()}</button></div>
+            <button type="button" className="icon-button" aria-label="Next month" onClick={() => setDisplayedMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><ArrowRight size={18} /></button>
           </div>
-          <div className="date-days">
-            {Array.from({ length: leading }, (_, index) => <span key={`empty-${index}`} />)}
-            {Array.from({ length: days }, (_, index) => {
-              const day = index + 1;
-              const nextValue = dateValue(day);
-              const accessibleDate = new Date(`${nextValue}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-              return <button type="button" key={nextValue} aria-label={`Select ${accessibleDate}`} aria-pressed={value === nextValue} className={value === nextValue ? "selected" : ""} onClick={() => onChange(nextValue)}>{day}</button>;
-            })}
-          </div>
+          {pickerView === "months" && <div className="date-choice-grid">{Array.from({ length: 12 }, (_, index) => { const name = new Date(displayedMonth.getFullYear(), index, 1).toLocaleDateString("en-IN", { month: "long" }); return <button type="button" key={name} aria-pressed={displayedMonth.getMonth() === index} onClick={() => { setDisplayedMonth(new Date(displayedMonth.getFullYear(), index, 1)); setPickerView("days"); }}>{name}</button>; })}</div>}
+          {pickerView === "years" && <div className="date-choice-grid date-year-grid">{Array.from({ length: 13 }, (_, index) => { const year = 2020 + index; return <button type="button" key={year} aria-pressed={displayedMonth.getFullYear() === year} onClick={() => { setDisplayedMonth(new Date(year, displayedMonth.getMonth(), 1)); setPickerView("days"); }}>{year}</button>; })}</div>}
+          {pickerView === "days" && <><div className="date-weekdays" aria-hidden="true">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}</div><div className="date-days">{Array.from({ length: leading }, (_, index) => <span key={`empty-${index}`} />)}{Array.from({ length: days }, (_, index) => { const day = index + 1; const nextValue = dateValue(day); const accessibleDate = new Date(`${nextValue}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }); return <button type="button" key={nextValue} aria-label={`Select ${accessibleDate}`} aria-pressed={value === nextValue} className={value === nextValue ? "selected" : ""} onClick={() => { onChange(nextValue); setOpen(false); }}>{day}</button>; })}</div></>}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
