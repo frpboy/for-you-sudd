@@ -315,6 +315,10 @@ textarea,
   -webkit-user-select: text;
   user-select: text;
 }
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
 html {
   background: var(--bg);
 }
