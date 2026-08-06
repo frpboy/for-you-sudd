@@ -22,3 +22,4 @@ IMG_*.PNG
 !private-media/**
 
 .vercel
+.playwright-cli
