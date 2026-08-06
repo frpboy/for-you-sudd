@@ -65,6 +65,30 @@ const labels: Record<View, string> = {
   ending: "Ending",
   secret: "A small secret",
 };
+type TransitionSound = "paper" | "pen" | "photo";
+let transitionAudio: AudioContext | null = null;
+function playTransitionSound(kind: TransitionSound) {
+  if (typeof window === "undefined") return;
+  try {
+    const context = transitionAudio ??= new AudioContext();
+    if (context.state === "suspended") void context.resume();
+    const duration = kind === "paper" ? 0.12 : kind === "pen" ? 0.08 : 0.1;
+    const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let index = 0; index < samples.length; index += 1) samples[index] = (Math.random() * 2 - 1) * (1 - index / samples.length);
+    const source = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const gain = context.createGain();
+    filter.type = kind === "paper" ? "lowpass" : "bandpass";
+    filter.frequency.value = kind === "paper" ? 700 : kind === "pen" ? 1900 : 1200;
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(kind === "pen" ? 0.006 : 0.012, context.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+    source.buffer = buffer;
+    source.connect(filter).connect(gain).connect(context.destination);
+    source.start();
+  } catch { /* UI sounds are optional. */ }
+}
 
 export function StoryExperience({ content }: { content: SafeContent }) {
   const reduced = useReducedMotion();
@@ -285,6 +309,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     player.volume = ambientVolume;
     void player.play().catch(() => undefined);
   }, [ambientEnabled, ambientVolume]);
+  const openPhoto = useCallback((id: string) => {
+    playTransitionSound("photo");
+    setMediaId(id);
+  }, []);
   function go(next: View) {
     const voice = activeVoice.current;
     if (voice && !voice.paused) {
@@ -536,7 +564,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
             />
           )}
           {view === "numbers" && <OurNumbers />}
-          {view === "albums" && <Albums content={content} onOpen={setMediaId} />}
+          {view === "albums" && <Albums content={content} onOpen={openPhoto} />}
           {view === "voice" && (
             <Voice
               content={content}
@@ -570,20 +598,20 @@ export function StoryExperience({ content }: { content: SafeContent }) {
             <Reveal title="Someday, together" entries={content.dreams} />
           )}
           {view === "letter" && (
-            <Letter content={content} onOpen={setMediaId} />
+            <Letter content={content} onOpen={openPhoto} />
           )}
           {view === "final-note" && <FinalNote content={content} completed={completedViews.has("final-note")} onReady={() => completeView("final-note")} />}
           {view === "malayalam-letter" && <MalayalamLetter completed={completedViews.has("malayalam-letter")} onReady={() => completeView("malayalam-letter")} />}
           {view === "final-photo" && <FinalPhoto content={content} />}
           {view === "cake" && <Cake completed={completedViews.has("cake")} onCelebrate={() => { celebrateCandle(); completeView("cake"); }} onNext={() => navigate("next")} />}
           {view === "gift" && (
-            <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} onNext={next} />
+            <Gift completed={completedViews.has("gift")} onSound={() => playTransitionSound("paper")} onOpen={() => { burstConfetti(); completeView("gift"); }} onNext={next} />
           )}
           {view === "ending" && <Ending hasSecret={content.features.secretMemories && content.secretMediaIds.length > 0} onSecret={() => go("secret")} />}
           {view === "secret" && (
             <SecretAlbum
               content={content}
-              onOpen={setMediaId}
+              onOpen={openPhoto}
               onExit={() => go("ending")}
             />
           )}
@@ -1031,6 +1059,7 @@ function Letter({
   );
 }
 function FinalNote({ content, completed, onReady }: { content: SafeContent; completed: boolean; onReady: () => void }) {
+  useEffect(() => { if (!completed) playTransitionSound("pen"); }, [completed]);
   return (
     <article className="letter final-note">
       <p className="eyebrow">one last note</p>
@@ -1191,7 +1220,7 @@ function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebr
     </section>
   );
 }
-function Gift({ completed, onOpen, onNext }: { completed: boolean; onOpen: () => void; onNext: () => void }) {
+function Gift({ completed, onSound, onOpen, onNext }: { completed: boolean; onSound: () => void; onOpen: () => void; onNext: () => void }) {
   const [state, setState] = useState<"closed" | "opening" | "open" | "revealed" | "transitioning" | "completed">(completed ? "completed" : "closed");
   const locked = useRef(completed);
   const transitioned = useRef(completed);
@@ -1208,6 +1237,7 @@ function Gift({ completed, onOpen, onNext }: { completed: boolean; onOpen: () =>
     if (state !== "closed" || locked.current) return;
     locked.current = true;
     setState("opening");
+    onSound();
     navigator.vibrate?.(15);
     timers.current.push(
       window.setTimeout(() => setState("open"), 800),
