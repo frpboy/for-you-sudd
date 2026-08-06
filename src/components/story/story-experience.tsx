@@ -1064,6 +1064,8 @@ function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: 
 function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
+  const ready = useRef(onReady);
+  useEffect(() => { ready.current = onReady; }, [onReady]);
   useEffect(() => {
     if (completed) {
       if (text.current) text.current.textContent = handwrittenLetter;
@@ -1083,11 +1085,11 @@ function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady:
         next = now + (glyph === "\n" ? 260 : /[,.]/.test(glyph) ? 125 + Math.random() * 90 : 28 + Math.random() * 22);
       }
       if (index < glyphs.length) frame = requestAnimationFrame(tick);
-      else timer = window.setTimeout(() => { cursor.current?.classList.add("is-fading"); onReady(); }, 3500);
+      else timer = window.setTimeout(() => { cursor.current?.classList.add("is-fading"); ready.current(); }, 3500);
     };
     frame = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [completed, onReady]);
+  }, [completed]);
   return <div data-story-interactive className="handwritten-paper" aria-label={handwrittenLetter}><p className="handwritten-text"><span ref={text} /><span ref={cursor} className="typing-cursor" aria-hidden="true" /></p></div>;
 }
 function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebrate: () => void; onNext: () => void }) {
