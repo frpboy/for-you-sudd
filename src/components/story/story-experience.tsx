@@ -305,6 +305,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     else if (storyShell.current) storyShell.current.scrollTop = 0;
   }, [view]);
   function navigate(direction: "next" | "previous") {
+    if (direction === "next" && view === "quiz" && !completedViews.has("quiz")) return;
     if (navigationLocked.current) return;
     navigationLocked.current = true;
     window.setTimeout(() => { navigationLocked.current = false; }, 800);
