@@ -742,6 +742,12 @@ function Voice({
   const media = content.voice.mediaId
     ? content.media.find((item) => item.id === content.voice.mediaId)
     : undefined;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (audio.current?.paused) onPlayVoice(audio.current);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [media?.id, onPlayVoice]);
   return (
     <section className="voice voice-opening">
       <p className="eyebrow">just for you <Heart size={13} fill="currentColor" /></p>
@@ -755,7 +761,7 @@ function Voice({
             onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }}
             onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); onComplete(); }}
           />
-          <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
+          <button className={`voice-play ${playing ? "is-playing" : ""}`} onClick={() => { if (!audio.current) return; if (audio.current.paused) { if (audio.current.ended) audio.current.currentTime = 0; onPlayVoice(audio.current); } else audio.current.pause(); }} aria-label={playing ? "Pause voice message" : "Play voice message"}><span>{playing ? "❚❚" : "▶"}</span></button>
           <div className="wave" aria-hidden="true">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 45}ms` }} />)}</div>
           <p>{playing ? "Playing for you…" : completed ? "A little voice to keep close." : "Close your eyes for a moment and just listen."}</p>
         </div>
