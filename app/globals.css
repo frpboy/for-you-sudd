@@ -245,6 +245,7 @@
   background: transparent;
   color: var(--accent);
 }
+.story-time { margin: 32px 0 0; color: var(--muted); font-size: .86rem; line-height: 1.55; text-align: center; }.story-time strong { color: var(--deep); font-family: Georgia, serif; font-size: 1.1rem; font-weight: 500; }.ending-restart { display: block; margin: 26px auto 0; }
 .secret-trigger:focus-visible {
   outline: 3px solid var(--deep);
   outline-offset: 3px;
@@ -576,6 +577,10 @@ input:focus-visible {
 .story-shell.is-page-hidden *,
 .story-shell.is-page-hidden *::before,
 .story-shell.is-page-hidden *::after { animation-play-state: paused !important; }
+.story-shell.is-chrome-hidden .story-header,
+.story-shell.is-chrome-hidden .swipe-hint { opacity: 0; pointer-events: none; }
+.story-header,
+.swipe-hint { transition: opacity 250ms ease-in-out; }
 .ambient-particles {
   position: absolute;
   z-index: 0;
@@ -644,7 +649,7 @@ input:focus-visible {
   font-size: 0.75rem;
 }
 .story-progress { display: flex; flex: 1; gap: 3px; align-items: center; }
-.story-progress i { height: 2px; flex: 1; border-radius: 999px; background: #5b755332; transform: scaleX(0); transform-origin: left; transition: transform 420ms ease, background-color 420ms ease; }
+.story-progress i { height: 2px; flex: 1; border-radius: 999px; background: #5b755332; transform: scaleX(0); transform-origin: left; transition: transform 250ms ease-in-out, background-color 250ms ease-in-out; }
 .story-progress i.is-active { background: var(--deep); transform: scaleX(1); }
 .swipe-hint, .swipe-copy { margin: 0; color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
 .swipe-hint { position: fixed; z-index: 4; right: 0; bottom: calc(12px + env(safe-area-inset-bottom)); left: 0; pointer-events: none; opacity: .72; }
@@ -1048,11 +1053,13 @@ input:focus-visible {
 }
 .confetti i {
   position: absolute;
-  top: -18px;
-  width: 10px;
-  height: 16px;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
   background: var(--accent);
-  animation: fall 2s ease-in forwards;
+  animation: confetti-flight var(--duration) cubic-bezier(.18,.72,.32,1) var(--delay) both;
 }
 .confetti i:nth-child(3n) {
   background: var(--primary);
@@ -1060,10 +1067,14 @@ input:focus-visible {
 .confetti i:nth-child(3n + 1) {
   background: #dd8e7a;
 }
-@keyframes fall {
-  to {
-    transform: translateY(110dvh) rotate(680deg);
-  }
+@keyframes confetti-flight {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0); }
+  8% { opacity: 1; }
+  55% { opacity: 1; transform: translate3d(calc(var(--x) * .78), calc(var(--y) * .55 - 18vh), 0) rotate(calc(var(--r) * .58)); }
+  100% { opacity: 0; transform: translate3d(var(--x), var(--y), 0) rotate(var(--r)); }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  body::before { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 28px; content: "Please rotate your phone ❤️"; color: var(--deep); background: var(--bg); font: 1.5rem/1.35 Georgia, serif; text-align: center; }
 }
 @keyframes flicker {
   to {

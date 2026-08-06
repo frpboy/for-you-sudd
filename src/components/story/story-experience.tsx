@@ -10,7 +10,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoryContent } from "@/content/schema";
 import { matchesAnswer } from "@/lib/answer-normalization";
 import { hasLocalBirthdayStarted } from "@/lib/birthday-state";
@@ -142,6 +142,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
   const [pageVisible, setPageVisible] = useState(() => typeof document === "undefined" || !document.hidden);
   const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
+  const [showChrome, setShowChrome] = useState(true);
   const audio = useRef<HTMLAudioElement>(null);
   const storyShell = useRef<HTMLElement>(null);
   const activeVoice = useRef<HTMLAudioElement | null>(null);
@@ -156,8 +157,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const restoredProgress = useRef(false);
   const ambientStarted = useRef(false);
   const idleTimer = useRef<number | null>(null);
+  const chromeTimer = useRef<number | null>(null);
   const autoAdvance = useRef<() => void>(() => undefined);
   const initialTitle = useRef<string | null>(null);
+  const storyStartedAt = useRef(Date.now());
+  const historySeeded = useRef(false);
   const index = sequence.indexOf(view);
   const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
@@ -272,6 +276,23 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     };
   }, [pageVisible, reduced, view]);
   useEffect(() => {
+    const images = content.media.filter((item) => item.kind === "image").map((item) => {
+      const image = new Image();
+      image.src = `/api/media/${item.id}`;
+      return image.decode().catch(() => undefined);
+    });
+    content.media.filter((item) => item.kind !== "image").forEach((item) => {
+      const element = document.createElement(item.kind === "video" ? "video" : "audio");
+      element.preload = "auto";
+      element.src = `/api/media/${item.id}`;
+      element.load();
+    });
+    void Promise.all(images);
+    void document.fonts?.load('1em "Noto Serif Malayalam"');
+    const cake = new Image();
+    cake.src = "/birthday-cake-illustration.png";
+  }, [content.media]);
+  useEffect(() => {
     const nextView = view === "chapters" && chapter < content.chapters.length - 1
       ? "chapters" : sequence[index + 1];
     const nextMediaId = nextView === "chapters"
@@ -324,7 +345,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     playTransitionSound("photo");
     setMediaId(id);
   }, []);
-  function go(next: View) {
+  function go(next: View, replace = false) {
     const voice = activeVoice.current;
     if (voice && !voice.paused) {
       activeVoice.current = null;
@@ -338,8 +359,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       setCompletedAt(timestamp);
     }
     setFinaleReady(false);
+    playTransitionSound("paper");
     setView(next);
-    window.history.pushState({ story: next }, "", `#${next}`);
+    window.history[replace ? "replaceState" : "pushState"]({ story: next }, "", `#${next}`);
   }
   const completeView = useCallback((completed: View) => {
     setCompletedViews((current) => current.has(completed) ? current : new Set(current).add(completed));
@@ -348,6 +370,12 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const requiresCompletion = view === "voice" || view === "voices" || view === "quiz" || view === "final-note" || view === "malayalam-letter" || view === "cake" || view === "gift";
   const pageReady = !requiresCompletion || completedViews.has(view);
   const noteActivity = useCallback(() => setActivity((current) => current + 1), []);
+  useEffect(() => {
+    setShowChrome(true);
+    if (chromeTimer.current) window.clearTimeout(chromeTimer.current);
+    chromeTimer.current = window.setTimeout(() => setShowChrome(false), 5000);
+    return () => { if (chromeTimer.current) window.clearTimeout(chromeTimer.current); };
+  }, [activity]);
   useEffect(() => {
     if (!pageReady || view === "ending" || view === "preflight") return;
     idleTimer.current = window.setTimeout(() => autoAdvance.current(), 30_000);
@@ -368,7 +396,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       return;
     }
     const previousView = sequence[index - 1];
-    if (previousView) go(previousView);
+    if (previousView) window.history.back();
   }
   useEffect(() => {
     const checkBirthday = () => {
@@ -434,14 +462,31 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (position >= 1 - edge) navigate("next");
   }
   useEffect(() => {
-    window.history.pushState({ leaveGuard: true }, "", window.location.href);
-    const onPop = () => {
+    if (!historySeeded.current) {
+      historySeeded.current = true;
+      window.history.pushState({ story: view }, "", `#${view}`);
+    }
+    const onPop = (event: PopStateEvent) => {
+      const target = event.state?.story as View | undefined;
+      if (target && (sequence.includes(target) || target === "secret")) {
+        setView(target);
+        return;
+      }
       setShowLeaveConfirm(true);
-      window.history.pushState({ leaveGuard: true }, "", window.location.href);
+      window.history.pushState({ story: view }, "", `#${view}`);
     };
     addEventListener("popstate", onPop);
     return () => removeEventListener("popstate", onPop);
-  }, []);
+  }, [sequence, view]);
+  useEffect(() => {
+    if (view === "ending") return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    addEventListener("beforeunload", warn);
+    return () => removeEventListener("beforeunload", warn);
+  }, [view]);
   const active = content.media.find((item) => item.id === mediaId);
   const showAmbient = pageVisible && !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const playVoice = useCallback((voice: HTMLAudioElement) => {
@@ -486,10 +531,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   return (
     <main
       ref={storyShell}
-      className={`story-shell${!pageVisible ? " is-page-hidden" : ""}${view === "albums" || view === "videos" || view === "voices" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
-      onPointerDownCapture={noteActivity}
-      onKeyDownCapture={noteActivity}
-      onScrollCapture={noteActivity}
+      className={`story-shell${!pageVisible ? " is-page-hidden" : ""}${!showChrome ? " is-chrome-hidden" : ""}${view === "albums" || view === "videos" || view === "voices" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
+      onPointerDownCapture={() => { setShowChrome(true); noteActivity(); }}
+      onKeyDownCapture={() => { setShowChrome(true); noteActivity(); }}
+      onScrollCapture={() => { setShowChrome(true); noteActivity(); }}
       onClickCapture={(event) => {
         noteActivity();
         if (!event.detail) return;
@@ -521,13 +566,16 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       {showAmbient && floatingHeart && <span className="floating-heart" key={floatingHeart} aria-hidden="true">♥</span>}
       {confetti && (
         <div className="confetti" aria-hidden="true">
-          {Array.from({ length: 26 }, (_, index) => (
+          {Array.from({ length: 36 }, (_, index) => (
             <i
               key={index}
               style={{
-                left: `${(index * 31) % 100}%`,
-                animationDelay: `${(index % 9) * 90}ms`,
-              }}
+                "--x": `${(index * 37) % 104 - 52}vw`,
+                "--y": `${42 + (index * 23) % 54}vh`,
+                "--r": `${(index * 73) % 720 - 360}deg`,
+                "--delay": `${(index % 8) * 36}ms`,
+                "--duration": `${1.55 + (index % 7) * 0.12}s`,
+              } as CSSProperties}
             />
           ))}
         </div>
@@ -565,11 +613,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           initial={reduced || visitedViews.has(view) ? false : { opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: -12 }}
-          transition={{ duration: reduced ? 0.15 : 0.72 }}
+          transition={{ duration: reduced ? 0.15 : 0.45, ease: "easeInOut" }}
         >
           {view === "preflight" && <Preflight onReady={() => go("start")} />}
-          {view === "start" && <Start onBegin={() => { setAmbientEnabled(true); playAmbient(); go("welcome"); }} />}
-          {view === "welcome" && <Welcome content={content} />}
+          {view === "start" && <Start onBegin={() => { storyStartedAt.current = Date.now(); setAmbientEnabled(true); playAmbient(); go("welcome"); }} />}
+          {view === "welcome" && <Welcome content={content} birthday={content.project.birthday} />}
           {view === "countdown" && <Countdown birthday={content.project.birthday} />}
           {view === "chapters" && (
             <Chapter
@@ -623,12 +671,12 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "gift" && (
             <Gift completed={completedViews.has("gift")} onSound={() => playTransitionSound("paper")} onOpen={() => { burstConfetti(); completeView("gift"); }} onNext={next} />
           )}
-          {view === "ending" && <Ending hasSecret={content.features.secretMemories && content.secretMediaIds.length > 0} onSecret={() => go("secret")} />}
+          {view === "ending" && <Ending hasSecret={content.features.secretMemories && content.secretMediaIds.length > 0} minutes={Math.max(1, Math.round((Date.now() - storyStartedAt.current) / 60000))} onRestart={() => { audio.current?.pause(); if (audio.current) audio.current.currentTime = 0; localStorage.removeItem("for-u-sudd-progress"); window.location.assign("/access"); }} onSecret={() => go("secret")} />}
           {view === "secret" && (
             <SecretAlbum
               content={content}
               onOpen={openPhoto}
-              onExit={() => go("ending")}
+              onExit={() => go("ending", true)}
             />
           )}
         </motion.section>
@@ -699,9 +747,16 @@ function Start({
 }
 function Welcome({
   content,
+  birthday,
 }: {
   content: SafeContent;
+  birthday: string;
 }) {
+  const today = new Date();
+  const target = new Date(`${birthday}T00:00:00`);
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const birthdayStart = new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime();
+  const birthdayLine = todayStart < birthdayStart ? "Just a little longer... ❤️" : todayStart === birthdayStart ? "Today is your day." : "This memory was made especially for your birthday.";
   return (
     <div className="poster">
       <p className="eyebrow">08 · 08 · 2026</p>
@@ -711,6 +766,7 @@ function Welcome({
         <em>{content.participants.nickname}.</em>
       </h1>
       <p className="lede">{content.greeting}</p>
+      <p className="lede">{birthdayLine}</p>
       <p className="swipe-copy">Swipe left to begin</p>
     </div>
   );
@@ -1278,12 +1334,17 @@ function Gift({ completed, onSound, onOpen, onNext }: { completed: boolean; onSo
     </section>
   );
 }
-function Ending({ hasSecret, onSecret }: { hasSecret: boolean; onSecret: () => void }) {
+function Ending({ hasSecret, minutes, onRestart, onSecret }: { hasSecret: boolean; minutes: number; onRestart: () => void; onSecret: () => void }) {
   const [signature, setSignature] = useState(false);
+  const [restartReady, setRestartReady] = useState(false);
   const [presses, setPresses] = useState(0);
   const pressCount = useRef(0);
   useEffect(() => {
     const timer = window.setTimeout(() => setSignature(true), 3600);
+    return () => window.clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setRestartReady(true), 9000);
     return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => {
@@ -1301,7 +1362,7 @@ function Ending({ hasSecret, onSecret }: { hasSecret: boolean; onSecret: () => v
     setPresses(0);
     onSecret();
   };
-  return <section className="cinematic-ending"><p className={`cinematic-ending-copy${signature ? " is-signature" : ""}`}>{signature ? <>Made with love,<br />Rashi</> : <>Happy Birthday,<br />Sudd.<br /><Heart fill="currentColor" aria-label="love" /></>}</p>{hasSecret && <button className="secret-trigger" onClick={reveal} aria-label="A small secret is hidden here. Activate three times to reveal it."><Heart fill="currentColor" aria-hidden="true" /></button>}</section>;
+  return <section className="cinematic-ending"><p className={`cinematic-ending-copy${signature ? " is-signature" : ""}`}>{signature ? <>Made with love,<br />Rashi</> : <>Happy Birthday,<br />Sudd.<br /><Heart fill="currentColor" aria-label="love" /></>}</p><p className="story-time">You just spent<br /><strong>{minutes} minute{minutes === 1 ? "" : "s"}</strong><br />reliving our memories ❤️</p>{restartReady && <button className="secondary ending-restart" onClick={onRestart}>Restart the story</button>}{hasSecret && <button className="secret-trigger" onClick={reveal} aria-label="A small secret is hidden here. Activate three times to reveal it."><Heart fill="currentColor" aria-hidden="true" /></button>}</section>;
 }
 function SecretAlbum({
   content,
@@ -1367,7 +1428,7 @@ function MediaImage({ media, priority = false }: { media: SafeContent["media"][n
             ? { transform: `rotate(${media.rotation}deg)` }
             : undefined
         }
-        onLoad={() => setLoaded(true)}
+        onLoad={(event) => { void event.currentTarget.decode().catch(() => undefined).then(() => setLoaded(true)); }}
         onError={() => setFailed(true)}
       />
     </div>
