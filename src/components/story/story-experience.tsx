@@ -125,7 +125,6 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const ignoreNextTap = useRef(false);
   const navigationLocked = useRef(false);
-  const fadeFrame = useRef<number | null>(null);
   const voiceResumeTimer = useRef<number | null>(null);
   const heartCount = useRef(0);
   const restoredProgress = useRef(false);
@@ -207,21 +206,6 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     else element.preload = "metadata";
     element.src = `/api/media/${nextMedia.id}`;
   }, [chapter, content.chapters, content.media, content.videos, content.voice.mediaId, index, sequence, view]);
-  const fadeAmbient = useCallback((target: number, duration = 1000, after?: () => void) => {
-    const player = audio.current;
-    if (!player) return;
-    if (fadeFrame.current) cancelAnimationFrame(fadeFrame.current);
-    const from = player.volume;
-    const started = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min(1, Math.max(0, (now - started) / duration));
-      const eased = progress * progress * (3 - 2 * progress);
-      player.volume = from + (target - from) * eased;
-      if (progress < 1) fadeFrame.current = requestAnimationFrame(tick);
-      else { fadeFrame.current = null; after?.(); }
-    };
-    fadeFrame.current = requestAnimationFrame(tick);
-  }, []);
   const playAmbient = useCallback(() => {
     const player = audio.current;
     if (!player) return;
@@ -245,7 +229,20 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
+  const resumeAmbientImmediately = useCallback(() => {
+    if (voiceResumeTimer.current) window.clearTimeout(voiceResumeTimer.current);
+    const player = audio.current;
+    if (!player || !ambientEnabled || document.hidden) return;
+    player.volume = ambientVolume;
+    void player.play().catch(() => undefined);
+  }, [ambientEnabled, ambientVolume]);
   function go(next: View) {
+    const voice = activeVoice.current;
+    if (voice && !voice.paused) {
+      activeVoice.current = null;
+      voice.pause();
+      resumeAmbientImmediately();
+    }
     setVisitedViews((current) => current.has(view) ? current : new Set(current).add(view));
     setFinaleReady(false);
     setView(next);
@@ -356,26 +353,23 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const playVoice = useCallback((voice: HTMLAudioElement) => {
     if (activeVoice.current === voice && !voice.paused) return;
-    if (activeVoice.current && activeVoice.current !== voice) activeVoice.current.pause();
+    const currentVoice = activeVoice.current;
+    if (currentVoice && currentVoice !== voice) {
+      activeVoice.current = null;
+      currentVoice.pause();
+    }
     if (voiceResumeTimer.current) window.clearTimeout(voiceResumeTimer.current);
     activeVoice.current = voice;
     const player = audio.current;
-    const startVoice = () => { player?.pause(); void voice.play(); };
-    if (ambientEnabled && player && !player.paused) fadeAmbient(0, 300, startVoice);
-    else startVoice();
-  }, [ambientEnabled, fadeAmbient]);
+    player?.pause();
+    voice.volume = 1;
+    void voice.play();
+  }, []);
   const voiceEnded = useCallback((voice: HTMLAudioElement) => {
     if (activeVoice.current !== voice) return;
     activeVoice.current = null;
-    if (!ambientEnabled) return;
-    if (voiceResumeTimer.current) window.clearTimeout(voiceResumeTimer.current);
-    voiceResumeTimer.current = window.setTimeout(() => {
-      const player = audio.current;
-      if (!player || !ambientEnabled || document.hidden) return;
-      player.volume = 0;
-      void player.play().then(() => fadeAmbient(ambientVolume, 600)).catch(() => undefined);
-    }, 400);
-  }, [ambientEnabled, ambientVolume, fadeAmbient]);
+    resumeAmbientImmediately();
+  }, [resumeAmbientImmediately]);
   const burstConfetti = useCallback(() => {
     setConfetti(true);
     setTimeout(() => setConfetti(false), 2400);
