@@ -206,6 +206,10 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     else element.preload = "metadata";
     element.src = `/api/media/${nextMedia.id}`;
   }, [chapter, content.chapters, content.media, content.videos, content.voice.mediaId, index, sequence, view]);
+  useEffect(() => {
+    const cake = new Image();
+    cake.src = "/birthday-cake-illustration.png";
+  }, []);
   const playAmbient = useCallback(() => {
     const player = audio.current;
     if (!player) return;
@@ -1085,20 +1089,24 @@ function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady:
 }
 function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebrate: () => void; onNext: () => void }) {
   const [lit, setLit] = useState(!completed);
+  const blown = useRef(completed);
+  const nextTimer = useRef<number | null>(null);
   const isLit = lit && !completed;
   const blowOut = () => {
-    if (!isLit) return;
+    if (!isLit || blown.current) return;
+    blown.current = true;
     setLit(false);
     onCelebrate();
     navigator.vibrate?.(15);
-    window.setTimeout(onNext, 1500);
+    nextTimer.current = window.setTimeout(onNext, 1500);
   };
+  useEffect(() => () => { if (nextTimer.current) window.clearTimeout(nextTimer.current); }, []);
   return (
     <section className="cake">
       <p className="eyebrow">make a wish</p>
       <div className={`cake-art ${isLit ? "lit" : ""}${isLit ? "" : " is-blown"}`} aria-label="Birthday cake with three candles">
         <img className="cake-illustration" src="/birthday-cake-illustration.png" alt="Elegant pastel birthday cake with three candles" />
-        {[0, 1, 2].map((candle) => <button type="button" className={`flame flame-${candle + 1}`} key={candle} onClick={blowOut} aria-label={`Blow out candle ${candle + 1}`}><span /></button>)}
+        {[0, 1, 2].map((candle) => <button type="button" disabled={!isLit} className={`flame flame-${candle + 1}`} key={candle} onClick={blowOut} aria-label={`Blow out candle ${candle + 1}`}><span /></button>)}
         <span className="cake-smoke" aria-hidden="true"><i /><i /><i /></span>
       </div>
       <h1>{isLit ? "Tap a candle" : "Wish made."}</h1>
