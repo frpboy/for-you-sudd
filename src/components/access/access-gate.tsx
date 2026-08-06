@@ -1,8 +1,10 @@
 "use client";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Heart, Volume2 } from "lucide-react";
 
 export function AccessGate() {
+  const router = useRouter();
   const [passphrase, setPassphrase] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,7 +39,7 @@ export function AccessGate() {
     }
     navigator.vibrate?.(12);
     localStorage.removeItem("for-u-sudd-progress");
-    window.location.assign("/story");
+    router.push("/story");
   }
   return (
     <main className="access-shell">

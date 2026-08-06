@@ -4,7 +4,7 @@ This website is a private birthday keepsake made for Sudd. It is designed to fee
 
 The story is best enjoyed on a mobile phone with a stable internet connection. Open the private link in Chrome on Android or Safari on iPhone, enter the passphrase, and turn the phone sound on if you would like to hear the ambient music and voice notes. Some phones do not allow music to begin until the first touch; if that happens, the music button in the top-right corner starts or pauses it.
 
-To move through the story, swipe left or right, or gently tap near the outer edge of the screen. The middle of the screen is kept free for photos, videos, quiz answers, and other controls. The small bars at the top show where you are in the journey. If the browser Back button is pressed by accident, the website asks whether you want to leave instead of immediately closing the story.
+To move through the story, gently tap near the outer edge of the screen. The middle of the screen is kept free for photos, videos, quiz answers, and other controls. The small bars at the top show where you are in the journey. If the browser Back button is pressed by accident, the website asks whether you want to leave instead of immediately closing the story.
 
 Photos open when tapped. Inside a photo, you can swipe through the album, double tap to zoom, pinch to zoom with two fingers, and drag the image while it is zoomed. Tap the close button when you are ready to return to the story.
 

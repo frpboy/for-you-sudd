@@ -27,6 +27,13 @@ async function answerDate(
 test("protects the story and allows the private flow", async ({ page }) => {
   await enterStory(page);
 });
+test("unlocks the ambient track on the first access-screen interaction", async ({ page, request }) => {
+  await page.goto("/access");
+  expect((await request.get("/api/media/ambient")).status()).toBe(200);
+  const player = page.locator("#ambient-audio");
+  await page.getByLabel("Passphrase").click();
+  await expect.poll(() => player.evaluate((element) => !(element as HTMLAudioElement).paused)).toBe(true);
+});
 test("starts at the opening after access even with stale story progress", async ({ page }) => {
   await page.goto("/access");
   await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "quiz"));
@@ -34,30 +41,33 @@ test("starts at the opening after access even with stale story progress", async 
 });
 test("navigates stories with edge taps and horizontal swipes", async ({ page }) => {
   await enterStory(page);
-  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "welcome"));
-  await page.reload();
-  await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
-  await page.mouse.click(24, 420);
-  await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
   await page.mouse.click(360, 420);
   await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
-  await page.mouse.move(24, 420);
+  await page.mouse.click(360, 420);
+  await expect(page.getByRole("heading", { name: /before anything else/i })).toBeVisible();
+  await page.mouse.click(24, 420);
+  await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
+  await page.mouse.move(340, 420);
   await page.mouse.down();
-  await page.mouse.move(170, 420, { steps: 4 });
+  await page.mouse.move(80, 420, { steps: 4 });
   await page.mouse.up();
-  await expect(page.getByRole("heading", { name: /your special day/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /before anything else/i })).toBeVisible();
 });
 test("navigates with native touch events", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "chromium-mobile", "TouchEvent construction is Chromium coverage.");
   await enterStory(page);
-  await page.evaluate(() => localStorage.setItem("for-u-sudd-progress", "welcome"));
-  await page.reload();
   await page.locator("main.story-shell").evaluate((target) => {
     const touch = (x: number) => new Touch({ identifier: 1, target, clientX: x, clientY: 420 });
     target.dispatchEvent(new TouchEvent("touchstart", { bubbles: true, touches: [touch(340)] }));
     target.dispatchEvent(new TouchEvent("touchend", { bubbles: true, changedTouches: [touch(80)] }));
   });
-  await expect(page.getByRole("heading", { name: /it all started/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /happy birthday/i })).toBeVisible();
+  await page.locator("main.story-shell").evaluate((target) => {
+    const touch = (x: number) => new Touch({ identifier: 1, target, clientX: x, clientY: 420 });
+    target.dispatchEvent(new TouchEvent("touchstart", { bubbles: true, touches: [touch(340)] }));
+    target.dispatchEvent(new TouchEvent("touchend", { bubbles: true, changedTouches: [touch(80)] }));
+  });
+  await expect(page.getByRole("heading", { name: /before anything else/i })).toBeVisible();
 });
 test("does not disclose media to unauthenticated requests", async ({
   request,

@@ -38,7 +38,10 @@
     { "id":"video-moon","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.10 PM.mp4","alt":"Short filtered portrait video","caption":"A moonlit moment","approval":"pending","durationSeconds":2,"posterId":"photo-smile" },
     { "id":"video-final","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.25 PM.mp4","alt":"Short shared portrait video","caption":"Just us.","approval":"pending","durationSeconds":1,"posterId":"photo-sky" },
     { "id":"music-selected","kind":"audio","privatePath":"Sun Raha Hai Na Tu (SlowedReverb)#song #shorts.mp4","alt":"Selected background track","caption":"Background music","approval":"pending" },
-    { "id":"voice-birthday","kind":"audio","privatePath":"voice-note.m4a","alt":"A private birthday voice note","caption":"A Little Surprise ♥","approval":"pending" },
+    { "id":"voice-birthday","kind":"audio","privatePath":"client(rashi).mp4","alt":"A private birthday voice note","caption":"A Little Surprise ♥","approval":"pending" },
+    { "id":"voice-keep-listening","kind":"audio","privatePath":"dad.opus","alt":"An anonymous birthday voice note","caption":"Keep Listening ♥","approval":"pending" },
+    { "id":"voice-another-surprise","kind":"audio","privatePath":"aunty.opus","alt":"An anonymous birthday voice note","caption":"Another Little Surprise ♥","approval":"pending" },
+    { "id":"voice-one-more","kind":"audio","privatePath":"mom.opus","alt":"An anonymous birthday voice note","caption":"One More Message ♥","approval":"pending" },
     { "id":"note-universe","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.21.12 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"In every universe","approval":"pending" },
     { "id":"note-heart","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.15.44 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"A prettier heart","approval":"pending" },
     { "id":"note-only-you","kind":"image","privatePath":"WhatsApp Image 2026-08-02 at 2.11.29 PM.jpeg","alt":"Handwritten note on a burnt-paper style card","caption":"Only you","approval":"pending" },
@@ -52,7 +55,7 @@
     { "id":"favourites","title":"Favourite Photos","mediaIds":["photo-city","photo-flower","photo-daylight","photo-garden","photo-green","photo-peace","photo-outdoor","photo-tree","photo-glasses"] }
   ],
   "videos":[{"id":"ride","title":"A little ride","mediaId":"video-scooter"},{"id":"drive","title":"A little drive","mediaId":"video-car"},{"id":"moon","title":"A moonlit moment","mediaId":"video-moon"},{"id":"closing","title":"Just us.","mediaId":"video-final"}],
-  "voice":{"title":"A Little Surprise ♥","mediaId":"voice-birthday"},"voices":[{"id":"voice-01","title":"Keep Listening ♥","description":"Before we continue, I wanted you to hear this.","mediaId":"voice-birthday"}],
+  "voice":{"title":"A Little Surprise ♥","mediaId":"voice-birthday"},"voices":[{"id":"voice-01","title":"Keep Listening ♥","description":"Before we continue, I wanted you to hear this.","mediaId":"voice-keep-listening"},{"id":"voice-02","title":"Another Little Surprise ♥","description":"A few more words, just for you.","mediaId":"voice-another-surprise"},{"id":"voice-03","title":"One More Message ♥","description":"One last little voice to keep close.","mediaId":"voice-one-more"}],
   "quiz":[
     {"id":"commitment-date","question":"When did we become officially committed?","acceptedAnswers":["2025-12-26","26 December 2025","26/12/2025"],"hint":"Think of our December commitment."},
     {"id":"first-meet-date","question":"When did we first meet?","acceptedAnswers":["2026-01-06","6 January 2026","06/01/2026"],"hint":"Think of that early January morning."},
