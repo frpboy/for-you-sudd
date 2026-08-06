@@ -1024,6 +1024,8 @@ Stay happy and healthy my dear shuttmaniii`.replaceAll("\n", " ");
 function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
+  const ready = useRef(onReady);
+  useEffect(() => { ready.current = onReady; }, [onReady]);
   useEffect(() => {
     if (completed) {
       if (text.current) text.current.textContent = malayalamLetter;
@@ -1031,34 +1033,33 @@ function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: 
     }
     if (text.current) text.current.textContent = "";
     cursor.current?.classList.remove("is-fading");
-    const [body, quote] = malayalamLetter.split("\n\n");
     const segment = (value: string) => Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(value), ({ segment }) => segment);
-    const bodyGraphemes = segment(body);
-    const quoteGraphemes = segment(quote);
-    let writingQuote = false;
+    const graphemes = segment(malayalamLetter);
+    const quoteStart = graphemes.indexOf('"');
+    let pausedForQuote = false;
     let index = 0;
     let next = performance.now();
     let frame = 0;
     let timer = 0;
     const delayFor = (glyph: string) => glyph === "," ? 150 + Math.random() * 100 : glyph === "." || glyph === "…" ? 350 + Math.random() * 150 : 60 + Math.random() * 60;
     const tick = (now: number) => {
-      const graphemes = writingQuote ? quoteGraphemes : bodyGraphemes;
+      if (index === quoteStart && !pausedForQuote) {
+        pausedForQuote = true;
+        next = now + 900;
+        frame = requestAnimationFrame(tick);
+        return;
+      }
       if (now >= next && index < graphemes.length) {
         const glyph = graphemes[index++];
-        if (text.current) text.current.textContent += `${writingQuote && index === 1 ? "\n\n" : ""}${glyph}`;
+        text.current?.append(document.createTextNode(glyph));
         next = now + delayFor(glyph);
       }
       if (index < graphemes.length) frame = requestAnimationFrame(tick);
-      else if (!writingQuote) {
-        writingQuote = true;
-        index = 0;
-        next = now + 850 + Math.random() * 150;
-        frame = requestAnimationFrame(tick);
-      } else timer = window.setTimeout(() => { cursor.current?.classList.add("is-fading"); onReady(); }, 2300);
+      else timer = window.setTimeout(() => { cursor.current?.classList.add("is-fading"); ready.current(); }, 2300);
     };
     frame = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [completed, onReady]);
+  }, [completed]);
   return <article className="finale-letter malayalam-letter"><p className="eyebrow">from my heart</p><p className="typed-letter" aria-label={malayalamLetter}><span ref={text} /><span ref={cursor} className="typing-cursor" aria-hidden="true" /></p></article>;
 }
 function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady: () => void }) {
