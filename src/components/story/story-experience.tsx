@@ -1222,16 +1222,27 @@ function MediaOverlay({
   const gesture = useRef<{ x: number; y: number } | null>(null);
   const pinch = useRef<{ distance: number; scale: number } | null>(null);
   const drag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const preloaded = useRef(new Set<string>());
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const photoIndex = photos.findIndex((photo) => photo.id === media.id);
   const move = (direction: -1 | 1) => {
-    const next = photos[photoIndex + direction];
-    if (next) onChange(next.id);
+    if (photoIndex < 0 || photos.length < 2) return;
+    onChange(photos[(photoIndex + direction + photos.length) % photos.length].id);
   };
   useEffect(() => {
     ref.current?.focus();
   }, []);
+  useEffect(() => {
+    if (photoIndex < 0) return;
+    [-1, 0, 1].forEach((offset) => {
+      const photo = photos[(photoIndex + offset + photos.length) % photos.length];
+      if (preloaded.current.has(photo.id)) return;
+      preloaded.current.add(photo.id);
+      const image = new Image();
+      image.src = `/api/media/${photo.id}`;
+    });
+  }, [photoIndex, photos]);
   return (
     <motion.div
       className="media-overlay"
@@ -1303,7 +1314,7 @@ function MediaOverlay({
         }}
         onTouchEnd={(event) => { if (scale > 1) event.stopPropagation(); pinch.current = null; if (scale === 1) setPan({ x: 0, y: 0 }); }}
       >
-        <div className="zoomable-media" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}><MediaImage media={media} priority /></div>
+        <div key={media.id} className="zoomable-media" style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}><MediaImage media={media} priority /></div>
         <figcaption>{media.caption}</figcaption>
       </figure>
     </motion.div>
