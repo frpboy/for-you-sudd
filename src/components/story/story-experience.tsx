@@ -10,7 +10,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StoryContent } from "@/content/schema";
 import { matchesAnswer } from "@/lib/answer-normalization";
 import { hasLocalBirthdayStarted } from "@/lib/birthday-state";
@@ -136,6 +136,9 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
     .filter((item): item is SafeContent["media"][number] => item?.kind === "image"), [content.albums, content.media]);
+  const notePhotos = useMemo(() => content.letter.mediaIds
+    .map((id) => content.media.find((item) => item.id === id))
+    .filter((item): item is SafeContent["media"][number] => item?.kind === "image" && item.id !== "note-choose-you"), [content.letter.mediaIds, content.media]);
   useEffect(() => {
     const player = document.getElementById("ambient-audio") as HTMLAudioElement | null;
     if (!player) return;
@@ -556,7 +559,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       <Videos content={content} active={view === "videos"} enabled={videosReady} />
       <AnimatePresence>
         {active?.kind === "image" && (
-          <MediaOverlay media={active} photos={galleryPhotos} onChange={setMediaId} onClose={() => setMediaId(null)} />
+          <MediaOverlay media={active} photos={view === "letter" ? notePhotos : galleryPhotos} onChange={setMediaId} onClose={() => setMediaId(null)} />
         )}
       </AnimatePresence>
       {showLeaveConfirm && (
@@ -788,7 +791,7 @@ function Voices({ content, onPlayVoice, onVoiceEnded, onComplete }: { content: S
 function VoiceCard({ media, number, title, description, duration, onPlayVoice, onVoiceEnded, onComplete }: { media: SafeContent["media"][number]; number: number; title: string; description?: string; duration?: string; onPlayVoice: (voice: HTMLAudioElement) => void; onVoiceEnded: (voice: HTMLAudioElement) => void; onComplete?: () => void }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
-  return <article className={`voice-card ${playing ? "is-playing" : ""}`}><audio ref={audio} src={`/api/media/${media.id}`} preload="metadata" onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }} onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }} onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); onComplete?.(); }} /><span className="voice-count">Message {String(number).padStart(2, "0")} ♥</span><h2>{title}</h2>{description && <p>{description}</p>}<div className="voice-card-actions"><button className="secondary" onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }}>{playing ? "Pause" : "Play"} <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span></button>{duration && <small>{duration}</small>}</div><div className="wave card-wave" aria-hidden="true">{Array.from({ length: 22 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 35}ms` }} />)}</div></article>;
+  return <article className={`voice-card ${playing ? "is-playing" : ""}`}><audio ref={audio} src={`/api/media/${media.id}`} preload="metadata" onPlay={() => { setPlaying(true); if (audio.current) onPlayVoice(audio.current); }} onPause={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); }} onEnded={() => { setPlaying(false); if (audio.current) onVoiceEnded(audio.current); onComplete?.(); }} /><span className="voice-count">{["A little blessing", "A warm wish", "From the heart"][number - 1] ?? "With love"} ♥</span><h2>{title}</h2>{description && <p>{description}</p>}<div className="voice-card-actions"><button className="secondary" onClick={() => { if (!audio.current) return; if (audio.current.paused) onPlayVoice(audio.current); else audio.current.pause(); }}>{playing ? "Pause" : "Play"} <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span></button>{duration && <small>{duration}</small>}</div><div className="wave card-wave" aria-hidden="true">{Array.from({ length: 22 }, (_, index) => <i key={index} style={{ animationDelay: `${index * 35}ms` }} />)}</div></article>;
 }
 function DatePicker({
   value,
@@ -1018,7 +1021,6 @@ Love you always.
 And once again happy birthday shuttmani May you have a happy and blessed day
 I'm always here to support you, to stand by your side in difficult times and to celebrate with you in happy times Thank you for making everything good for me
 Stay happy and healthy my dear shuttmaniii`;
-const handwrittenLines = handwrittenLetter.split("\n");
 function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
@@ -1060,69 +1062,33 @@ function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: 
   return <article className="finale-letter malayalam-letter"><p className="eyebrow">from my heart</p><p className="typed-letter" aria-label={malayalamLetter}><span ref={text} /><span ref={cursor} className="typing-cursor" aria-hidden="true" /></p></article>;
 }
 function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady: () => void }) {
-  const paper = useRef<HTMLDivElement>(null);
-  const refs = useRef<Array<HTMLParagraphElement | null>>([]);
-  const [lines, setLines] = useState(handwrittenLines);
-  const [layoutReady, setLayoutReady] = useState(false);
-  useLayoutEffect(() => {
-    const element = paper.current;
-    if (!element) return;
-    const line = element.querySelector("p");
-    if (!line) return;
-    const style = getComputedStyle(line);
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-    const maxWidth = element.clientWidth - Number.parseFloat(getComputedStyle(element).paddingLeft) - Number.parseFloat(getComputedStyle(element).paddingRight);
-    const wrapped = handwrittenLines.flatMap((source) => {
-      if (!source) return [""];
-      const words = source.split(" ");
-      const result: string[] = [];
-      let line = "";
-      words.forEach((word) => {
-        const next = line ? `${line} ${word}` : word;
-        if (line && context.measureText(next).width > maxWidth) {
-          result.push(line);
-          line = word;
-        } else line = next;
-      });
-      if (line) result.push(line);
-      return result;
-    });
-    refs.current = [];
-    setLines(wrapped);
-    setLayoutReady(true);
-  }, []);
+  const text = useRef<HTMLSpanElement>(null);
+  const cursor = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    if (!layoutReady) return;
     if (completed) {
-      refs.current.forEach((element) => element?.style.setProperty("--ink-reveal", "1"));
+      if (text.current) text.current.textContent = handwrittenLetter;
       return;
     }
-    let line = 0;
-    let started = performance.now();
-    const writingDuration = (value: string) => Math.max(700, value.length * 34 + (value.match(/[,.]/g)?.length ?? 0) * 110 + Math.random() * 100);
-    let duration = writingDuration(lines[line]);
+    if (text.current) text.current.textContent = "";
+    cursor.current?.classList.remove("is-fading");
+    const glyphs = Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(handwrittenLetter), ({ segment }) => segment);
+    let index = 0;
+    let next = performance.now();
     let frame = 0;
     let timer = 0;
     const tick = (now: number) => {
-      const element = refs.current[line];
-      if (!element) return;
-      const progress = Math.min(1, Math.max(0, (now - started) / duration));
-      element.style.setProperty("--ink-reveal", String(progress));
-      if (progress < 1) frame = requestAnimationFrame(tick);
-      else if (line < lines.length - 1) {
-        line += 1;
-        started = now + 180;
-        duration = writingDuration(lines[line]);
-        frame = requestAnimationFrame(tick);
-      } else timer = window.setTimeout(onReady, 3500);
+      if (now >= next && index < glyphs.length) {
+        const glyph = glyphs[index++];
+        text.current?.append(document.createTextNode(glyph));
+        next = now + (glyph === "\n" ? 260 : /[,.]/.test(glyph) ? 125 + Math.random() * 90 : 28 + Math.random() * 22);
+      }
+      if (index < glyphs.length) frame = requestAnimationFrame(tick);
+      else timer = window.setTimeout(() => { cursor.current?.classList.add("is-fading"); onReady(); }, 3500);
     };
     frame = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(frame); window.clearTimeout(timer); };
-  }, [completed, layoutReady, lines, onReady]);
-  return <div ref={paper} data-story-interactive className={`handwritten-paper${layoutReady ? " is-ready" : ""}`} aria-label={handwrittenLetter}>{lines.map((line, index) => <p key={`${index}-${line}`} ref={(element) => { refs.current[index] = element; }} style={{ "--ink-reveal": 0 } as React.CSSProperties}>{line || " "}</p>)}</div>;
+  }, [completed, onReady]);
+  return <div data-story-interactive className="handwritten-paper" aria-label={handwrittenLetter}><p className="handwritten-text"><span ref={text} /><span ref={cursor} className="typing-cursor" aria-hidden="true" /></p></div>;
 }
 function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebrate: () => void; onNext: () => void }) {
   const [lit, setLit] = useState(!completed);
