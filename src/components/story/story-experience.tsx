@@ -131,6 +131,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const ambientStarted = useRef(false);
   const idleTimer = useRef<number | null>(null);
   const autoAdvance = useRef<() => void>(() => undefined);
+  const initialTitle = useRef<string | null>(null);
   const index = sequence.indexOf(view);
   const galleryPhotos = useMemo(() => [...new Set(content.albums.flatMap((album) => album.mediaIds))]
     .map((id) => content.media.find((item) => item.id === id))
@@ -161,6 +162,24 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const colorScheme = document.getElementById("app-color-scheme") as HTMLMetaElement | null;
     if (colorScheme) colorScheme.content = color === "#F6F0E6" ? "light" : "dark";
   }, [mediaId, view]);
+  useEffect(() => {
+    if (initialTitle.current === null) initialTitle.current = document.title;
+    const icon = view === "cake" ? "🎂" : view === "gift" ? "🎁" : view === "ending" ? "❤️" : "🤍";
+    const title = view === "voice" ? "🎙️ Listen carefully..." : view === "gift" ? "🎁 One last surprise..." : view === "ending" ? "❤️ Forever." : "🎂 Happy Birthday ❤️";
+    document.title = title;
+    let favicon = document.getElementById("story-favicon") as HTMLLinkElement | null;
+    if (!favicon) {
+      favicon = document.createElement("link");
+      favicon.id = "story-favicon";
+      favicon.rel = "icon";
+      document.head.append(favicon);
+    }
+    favicon.href = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><text y=".9em" font-size="56">${icon}</text></svg>`)}`;
+  }, [view]);
+  useEffect(() => () => {
+    if (initialTitle.current) document.title = initialTitle.current;
+    document.getElementById("story-favicon")?.remove();
+  }, []);
   useEffect(() => {
     if (view !== "final-note" && view !== "malayalam-letter") return;
     const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock;
