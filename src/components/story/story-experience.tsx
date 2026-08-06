@@ -534,7 +534,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "gift" && (
             <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} onNext={next} />
           )}
-          {view === "ending" && <Ending />}
+          {view === "ending" && <Ending hasSecret={content.features.secretMemories && content.secretMediaIds.length > 0} onSecret={() => go("secret")} />}
           {view === "secret" && (
             <SecretAlbum
               content={content}
@@ -1155,13 +1155,30 @@ function Gift({ completed, onOpen, onNext }: { completed: boolean; onOpen: () =>
     </section>
   );
 }
-function Ending() {
+function Ending({ hasSecret, onSecret }: { hasSecret: boolean; onSecret: () => void }) {
   const [signature, setSignature] = useState(false);
+  const [presses, setPresses] = useState(0);
+  const pressCount = useRef(0);
   useEffect(() => {
     const timer = window.setTimeout(() => setSignature(true), 3600);
     return () => window.clearTimeout(timer);
   }, []);
-  return <section className="cinematic-ending"><p className={`cinematic-ending-copy${signature ? " is-signature" : ""}`}>{signature ? <>Made with love,<br />Rashi</> : <>Happy Birthday,<br />Sudd.<br /><Heart fill="currentColor" aria-label="love" /></>}</p></section>;
+  useEffect(() => {
+    if (!presses) return;
+    const timer = window.setTimeout(() => { pressCount.current = 0; setPresses(0); }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [presses]);
+  const reveal = () => {
+    pressCount.current += 1;
+    if (pressCount.current < 3) {
+      setPresses(pressCount.current);
+      return;
+    }
+    pressCount.current = 0;
+    setPresses(0);
+    onSecret();
+  };
+  return <section className="cinematic-ending"><p className={`cinematic-ending-copy${signature ? " is-signature" : ""}`}>{signature ? <>Made with love,<br />Rashi</> : <>Happy Birthday,<br />Sudd.<br /><Heart fill="currentColor" aria-label="love" /></>}</p>{hasSecret && <button className="secret-trigger" onClick={reveal} aria-label="A small secret is hidden here. Activate three times to reveal it."><Heart fill="currentColor" aria-hidden="true" /></button>}</section>;
 }
 function SecretAlbum({
   content,
