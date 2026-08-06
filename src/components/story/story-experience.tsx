@@ -162,6 +162,32 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (colorScheme) colorScheme.content = color === "#F6F0E6" ? "light" : "dark";
   }, [mediaId, view]);
   useEffect(() => {
+    if (view !== "final-note" && view !== "malayalam-letter") return;
+    const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock;
+    if (!wakeLock) return;
+    let released = false;
+    let lock: { release: () => Promise<void> } | undefined;
+    const request = async () => {
+      if (released || document.hidden || lock) return;
+      try {
+        const next = await wakeLock.request("screen");
+        if (released) void next.release();
+        else lock = next;
+      } catch { /* Wake Lock is optional. */ }
+    };
+    const visibility = () => {
+      if (document.hidden) { void lock?.release(); lock = undefined; }
+      else void request();
+    };
+    void request();
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      released = true;
+      document.removeEventListener("visibilitychange", visibility);
+      void lock?.release();
+    };
+  }, [view]);
+  useEffect(() => {
     if (restoredProgress.current) return;
     restoredProgress.current = true;
     const saved = localStorage.getItem("for-u-sudd-progress") as View | null;
@@ -1015,10 +1041,41 @@ Love you always.
 And once again happy birthday shuttmani May you have a happy and blessed day
 I'm always here to support you, to stand by your side in difficult times and to celebrate with you in happy times Thank you for making everything good for me
 Stay happy and healthy my dear shuttmaniii`.replaceAll("\n", " ");
+function useWritingFollow(cursor: { readonly current: HTMLElement | null }, writing: boolean) {
+  useEffect(() => {
+    if (!writing) return;
+    const shell = cursor.current?.closest<HTMLElement>(".story-shell");
+    if (!shell) return;
+    let frame = 0;
+    let manualUntil = 0;
+    let autoScrolling = false;
+    const onScroll = () => { if (!autoScrolling) manualUntil = performance.now() + 1800; };
+    const follow = (now: number) => {
+      const marker = cursor.current;
+      if (marker) {
+        const bounds = shell.getBoundingClientRect();
+        const position = marker.getBoundingClientRect();
+        const targetBottom = bounds.bottom - shell.clientHeight * 0.3;
+        const nearMarker = position.bottom >= bounds.top && position.bottom <= bounds.bottom;
+        if (nearMarker && position.bottom <= targetBottom) manualUntil = 0;
+        if (now >= manualUntil && position.bottom > targetBottom) {
+          autoScrolling = true;
+          shell.scrollTop += Math.min(position.bottom - targetBottom, 10);
+          requestAnimationFrame(() => { autoScrolling = false; });
+        }
+      }
+      frame = requestAnimationFrame(follow);
+    };
+    shell.addEventListener("scroll", onScroll, { passive: true });
+    frame = requestAnimationFrame(follow);
+    return () => { cancelAnimationFrame(frame); shell.removeEventListener("scroll", onScroll); };
+  }, [cursor, writing]);
+}
 function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
   const ready = useRef(onReady);
+  useWritingFollow(cursor, !completed);
   useEffect(() => { ready.current = onReady; }, [onReady]);
   useEffect(() => {
     if (completed) {
@@ -1060,6 +1117,7 @@ function HandwrittenPaper({ completed, onReady }: { completed: boolean; onReady:
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
   const ready = useRef(onReady);
+  useWritingFollow(cursor, !completed);
   useEffect(() => { ready.current = onReady; }, [onReady]);
   useEffect(() => {
     if (completed) {
