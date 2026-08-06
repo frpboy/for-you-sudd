@@ -573,6 +573,9 @@ input:focus-visible {
   touch-action: pan-y;
 }
 .story-shell { padding-right: calc(18px + env(safe-area-inset-right)); padding-left: calc(18px + env(safe-area-inset-left)); }
+.story-shell.is-page-hidden *,
+.story-shell.is-page-hidden *::before,
+.story-shell.is-page-hidden *::after { animation-play-state: paused !important; }
 .ambient-particles {
   position: absolute;
   z-index: 0;

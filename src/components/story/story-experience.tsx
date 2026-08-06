@@ -131,7 +131,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [showMusicControls, setShowMusicControls] = useState(false);
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [completedAt] = useState<string | null>(() => typeof window === "undefined" ? null : localStorage.getItem("for-u-sudd-completed-at"));
+  const [completedAt, setCompletedAt] = useState<string | null>(() => typeof window === "undefined" ? null : localStorage.getItem("for-u-sudd-completed-at"));
   const [showReturnPrompt, setShowReturnPrompt] = useState(() => typeof window !== "undefined" && Boolean(localStorage.getItem("for-u-sudd-completed-at")));
   const [confetti, setConfetti] = useState(false);
   const [videosReady, setVideosReady] = useState(false);
@@ -140,6 +140,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const [visitedViews, setVisitedViews] = useState<Set<View>>(() => new Set());
   const [activity, setActivity] = useState(0);
   const [floatingHeart, setFloatingHeart] = useState<number | null>(null);
+  const [pageVisible, setPageVisible] = useState(() => typeof document === "undefined" || !document.hidden);
   const [tapPulse, setTapPulse] = useState<{ x: number; y: number; id: number } | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const storyShell = useRef<HTMLElement>(null);
@@ -151,6 +152,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const navigationLocked = useRef(false);
   const voiceResumeTimer = useRef<number | null>(null);
   const heartCount = useRef(0);
+  const heartHideTimer = useRef<number | null>(null);
   const restoredProgress = useRef(false);
   const ambientStarted = useRef(false);
   const idleTimer = useRef<number | null>(null);
@@ -251,15 +253,24 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   useEffect(() => { ambientEnabledRef.current = ambientEnabled; }, [ambientEnabled]);
   useEffect(() => { localStorage.setItem("for-u-sudd-ambient-volume", String(ambientVolume)); }, [ambientVolume]);
   useEffect(() => {
-    if (reduced) return;
+    const visibility = () => setPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", visibility);
+    return () => document.removeEventListener("visibilitychange", visibility);
+  }, []);
+  useEffect(() => {
+    if (reduced || !pageVisible || !["start", "welcome", "countdown", "gift", "ending"].includes(view)) return;
     const launch = () => {
       heartCount.current += 1;
       setFloatingHeart(heartCount.current);
-      window.setTimeout(() => setFloatingHeart(null), 5000);
+      if (heartHideTimer.current) window.clearTimeout(heartHideTimer.current);
+      heartHideTimer.current = window.setTimeout(() => setFloatingHeart(null), 5000);
     };
     const timer = window.setInterval(launch, 18000);
-    return () => window.clearInterval(timer);
-  }, [reduced]);
+    return () => {
+      window.clearInterval(timer);
+      if (heartHideTimer.current) window.clearTimeout(heartHideTimer.current);
+    };
+  }, [pageVisible, reduced, view]);
   useEffect(() => {
     const nextView = view === "chapters" && chapter < content.chapters.length - 1
       ? "chapters" : sequence[index + 1];
@@ -321,6 +332,11 @@ export function StoryExperience({ content }: { content: SafeContent }) {
       resumeAmbientImmediately();
     }
     setVisitedViews((current) => current.has(view) ? current : new Set(current).add(view));
+    if (next === "ending" && !completedAt) {
+      const timestamp = new Date().toISOString();
+      localStorage.setItem("for-u-sudd-completed-at", timestamp);
+      setCompletedAt(timestamp);
+    }
     setFinaleReady(false);
     setView(next);
     window.history.pushState({ story: next }, "", `#${next}`);
@@ -427,7 +443,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     return () => removeEventListener("popstate", onPop);
   }, []);
   const active = content.media.find((item) => item.id === mediaId);
-  const showAmbient = !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
+  const showAmbient = pageVisible && !reduced && ["start", "welcome", "countdown", "gift", "ending"].includes(view);
   const playVoice = useCallback((voice: HTMLAudioElement) => {
     if (activeVoice.current === voice && !voice.paused) return;
     const currentVoice = activeVoice.current;
@@ -470,7 +486,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   return (
     <main
       ref={storyShell}
-      className={`story-shell${view === "albums" || view === "videos" || view === "voices" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
+      className={`story-shell${!pageVisible ? " is-page-hidden" : ""}${view === "albums" || view === "videos" || view === "voices" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
       onPointerDownCapture={noteActivity}
       onKeyDownCapture={noteActivity}
       onScrollCapture={noteActivity}
@@ -502,7 +518,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         </div>
       )}
       {tapPulse && <span key={tapPulse.id} className="tap-pulse" aria-hidden="true" style={{ left: tapPulse.x, top: tapPulse.y }} onAnimationEnd={() => setTapPulse(null)} />}
-      {floatingHeart && <span className="floating-heart" key={floatingHeart} aria-hidden="true">♥</span>}
+      {showAmbient && floatingHeart && <span className="floating-heart" key={floatingHeart} aria-hidden="true">♥</span>}
       {confetti && (
         <div className="confetti" aria-hidden="true">
           {Array.from({ length: 26 }, (_, index) => (
@@ -635,8 +651,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
         <div className="leave-overlay" role="dialog" aria-modal="true" aria-labelledby="return-title">
           <div className="leave-dialog return-dialog">
             <Heart fill="currentColor" aria-hidden="true" />
-            <h2 id="return-title">Welcome back.</h2>
-            <p>Completed on<br />{new Date(completedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}</p>
+            <h2 id="return-title">You already completed this story once.</h2>
+            <p>Completed on<br />{new Date(completedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })} ❤️</p>
             <small>Made with love by {content.participants.sender}.</small>
             <div><button className="secondary" onClick={() => { setChapter(0); setQuiz(0); setView("welcome"); setShowReturnPrompt(false); }}>Replay</button><button className="primary" onClick={() => setShowReturnPrompt(false)}>Continue</button></div>
           </div>
