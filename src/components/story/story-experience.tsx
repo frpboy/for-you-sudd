@@ -120,8 +120,8 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   const audio = useRef<HTMLAudioElement>(null);
   const storyShell = useRef<HTMLElement>(null);
   const activeVoice = useRef<HTMLAudioElement | null>(null);
-  const resumeAfterFocus = useRef(false);
-  const resumeVoiceAfterFocus = useRef<HTMLAudioElement | null>(null);
+  const resumeAfterVisibility = useRef(false);
+  const ambientEnabledRef = useRef(ambientEnabled);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const ignoreNextTap = useRef(false);
   const navigationLocked = useRef(false);
@@ -180,6 +180,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     localStorage.setItem("for-u-sudd-progress", view);
   }, [progressRestored, view]);
   useEffect(() => { localStorage.setItem("for-u-sudd-ambient", String(ambientEnabled)); }, [ambientEnabled]);
+  useEffect(() => { ambientEnabledRef.current = ambientEnabled; }, [ambientEnabled]);
   useEffect(() => { localStorage.setItem("for-u-sudd-ambient-volume", String(ambientVolume)); }, [ambientVolume]);
   useEffect(() => {
     if (reduced) return;
@@ -228,33 +229,22 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     void player.play().then(() => { ambientStarted.current = true; setVideosReady(true); setAmbientEnabled(true); }).catch(() => undefined);
   }, [ambientVolume]);
   useEffect(() => {
-    const pauseForInterruption = () => {
+    const handleVisibility = () => {
       const player = audio.current;
-      resumeAfterFocus.current = Boolean(player && ambientEnabled && !player.paused);
-      player?.pause();
-      const voice = activeVoice.current;
-      resumeVoiceAfterFocus.current = voice && !voice.paused ? voice : null;
-      voice?.pause();
-    };
-    const resumeAfterInterruption = () => {
-      const player = audio.current;
-      if (resumeAfterFocus.current && ambientEnabled && player)
+      if (!player) return;
+      if (document.hidden) {
+        resumeAfterVisibility.current = ambientEnabledRef.current && !player.paused;
+        if (resumeAfterVisibility.current) player.pause();
+      } else if (resumeAfterVisibility.current && ambientEnabledRef.current) {
+        resumeAfterVisibility.current = false;
         void player.play().catch(() => undefined);
-      resumeAfterFocus.current = false;
-      if (resumeVoiceAfterFocus.current) void resumeVoiceAfterFocus.current.play().catch(() => undefined);
-      resumeVoiceAfterFocus.current = null;
+      } else {
+        resumeAfterVisibility.current = false;
+      }
     };
-    const visibility = () =>
-      document.hidden ? pauseForInterruption() : resumeAfterInterruption();
-    addEventListener("blur", pauseForInterruption);
-    addEventListener("focus", resumeAfterInterruption);
-    document.addEventListener("visibilitychange", visibility);
-    return () => {
-      removeEventListener("blur", pauseForInterruption);
-      removeEventListener("focus", resumeAfterInterruption);
-      document.removeEventListener("visibilitychange", visibility);
-    };
-  }, [ambientEnabled]);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
   function go(next: View) {
     setVisitedViews((current) => current.has(view) ? current : new Set(current).add(view));
     setFinaleReady(false);
@@ -381,7 +371,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if (voiceResumeTimer.current) window.clearTimeout(voiceResumeTimer.current);
     voiceResumeTimer.current = window.setTimeout(() => {
       const player = audio.current;
-      if (!player || !ambientEnabled) return;
+      if (!player || !ambientEnabled || document.hidden) return;
       player.volume = 0;
       void player.play().then(() => fadeAmbient(ambientVolume, 600)).catch(() => undefined);
     }, 400);
