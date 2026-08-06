@@ -931,6 +931,7 @@ input:focus-visible {
 .gift-box.open {
   transform: scale(1.12) rotate(-4deg);
 }
+.gift-box.revealed { filter: drop-shadow(0 0 18px #f7d88a88) drop-shadow(0 22px 18px #5b755333); }
 .empty {
   display: grid;
   justify-items: center;

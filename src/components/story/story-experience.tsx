@@ -532,7 +532,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
           {view === "final-photo" && <FinalPhoto content={content} />}
           {view === "cake" && <Cake completed={completedViews.has("cake")} onCelebrate={() => { celebrateCandle(); completeView("cake"); }} onNext={() => navigate("next")} />}
           {view === "gift" && (
-            <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} />
+            <Gift completed={completedViews.has("gift")} onOpen={() => { burstConfetti(); completeView("gift"); }} onNext={next} />
           )}
           {view === "ending" && <Ending />}
           {view === "secret" && (
@@ -1114,20 +1114,38 @@ function Cake({ completed, onCelebrate, onNext }: { completed: boolean; onCelebr
     </section>
   );
 }
-function Gift({ completed, onOpen }: { completed: boolean; onOpen: () => void }) {
-  const [open, setOpen] = useState(completed);
-  const isOpen = open || completed;
+function Gift({ completed, onOpen, onNext }: { completed: boolean; onOpen: () => void; onNext: () => void }) {
+  const [state, setState] = useState<"closed" | "opening" | "open" | "revealed" | "transitioning" | "completed">(completed ? "completed" : "closed");
+  const locked = useRef(completed);
+  const transitioned = useRef(completed);
+  const timers = useRef<number[]>([]);
+  const isOpen = state !== "closed";
+  const advance = useCallback(() => {
+    if (transitioned.current) return;
+    transitioned.current = true;
+    setState("transitioning");
+    onNext();
+  }, [onNext]);
+  useEffect(() => () => timers.current.forEach((timer) => window.clearTimeout(timer)), []);
+  const openGift = () => {
+    if (state !== "closed" || locked.current) return;
+    locked.current = true;
+    setState("opening");
+    navigator.vibrate?.(15);
+    timers.current.push(
+      window.setTimeout(() => setState("open"), 800),
+      window.setTimeout(() => { setState("revealed"); onOpen(); }, 1100),
+      window.setTimeout(advance, 2300),
+      window.setTimeout(advance, 2800),
+    );
+  };
   return (
     <section className="gift">
       <p className="eyebrow">one last thing</p>
       <button
-        className={`gift-box ${isOpen ? "open" : ""}`}
-        onClick={() => {
-          if (isOpen) return;
-          setOpen(true);
-          onOpen();
-          navigator.vibrate?.(15);
-        }}
+        className={`gift-box ${isOpen ? "open" : ""}${state === "revealed" ? " revealed" : ""}`}
+        onClick={openGift}
+        disabled={state !== "closed"}
         aria-label="Open your gift"
       >
         <span className="gift-lid" /><span className="gift-ribbon" /><span className="gift-body" />
