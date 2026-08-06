@@ -1020,7 +1020,7 @@ Always stay the amazing person you are — the world is better with you in it.
 Love you always.
 And once again happy birthday shuttmani May you have a happy and blessed day
 I'm always here to support you, to stand by your side in difficult times and to celebrate with you in happy times Thank you for making everything good for me
-Stay happy and healthy my dear shuttmaniii`;
+Stay happy and healthy my dear shuttmaniii`.replaceAll("\n", " ");
 function MalayalamLetter({ completed, onReady }: { completed: boolean; onReady: () => void }) {
   const text = useRef<HTMLSpanElement>(null);
   const cursor = useRef<HTMLSpanElement>(null);
