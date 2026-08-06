@@ -301,7 +301,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     return () => window.clearInterval(timer);
   }, [content.project.birthday, hasBirthdayStarted, view]);
   useEffect(() => {
-    if (view === "albums" || view === "videos" || view === "letter") storyShell.current?.scrollTo({ top: 0 });
+    if (view === "albums" || view === "videos" || view === "voices" || view === "letter") storyShell.current?.scrollTo({ top: 0 });
     else if (storyShell.current) storyShell.current.scrollTop = 0;
   }, [view]);
   function navigate(direction: "next" | "previous") {
@@ -325,7 +325,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     const velocity = Math.abs(x) / Math.max(1, performance.now() - start.time);
     if (Math.abs(y) > Math.abs(x) * 1.35 && ["letter", "final-note", "malayalam-letter"].includes(view)) return;
     if (["final-note", "malayalam-letter"].includes(view) && !finaleReady && !completedViews.has(view)) return;
-    if (Math.abs(y) > Math.abs(x) * 1.35 && (view === "albums" || view === "videos")) {
+    if (Math.abs(y) > Math.abs(x) * 1.35 && (view === "albums" || view === "videos" || view === "voices")) {
       const shell = storyShell.current;
       if (shell && Math.abs(y) >= 80) {
         if (y < 0 && shell.scrollTop + shell.clientHeight >= shell.scrollHeight - 2) navigate("next");
@@ -346,7 +346,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
     if ((event.target as HTMLElement).closest("[data-story-interactive], button, input, label, audio, video, select, textarea, a")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     const position = (event.clientX - bounds.left) / bounds.width;
-    const edge = view === "albums" || view === "videos" || (view === "voice" && activeVoice.current && !activeVoice.current.paused) ? 0.05 : 0.3;
+    const edge = view === "albums" || view === "videos" || view === "voices" || (view === "voice" && activeVoice.current && !activeVoice.current.paused) ? 0.05 : 0.3;
     if (position <= edge) navigate("previous");
     if (position >= 1 - edge) navigate("next");
   }
@@ -406,7 +406,7 @@ export function StoryExperience({ content }: { content: SafeContent }) {
   return (
     <main
       ref={storyShell}
-      className={`story-shell${view === "albums" || view === "videos" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
+      className={`story-shell${view === "albums" || view === "videos" || view === "voices" ? " is-gallery" : ""}${["letter", "final-note", "malayalam-letter"].includes(view) ? " is-letter" : ""}`}
       onPointerDownCapture={noteActivity}
       onKeyDownCapture={noteActivity}
       onScrollCapture={noteActivity}
