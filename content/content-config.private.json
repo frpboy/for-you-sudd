@@ -38,7 +38,7 @@
     { "id":"video-moon","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.10 PM.mp4","alt":"Short filtered portrait video","caption":"A moonlit moment","approval":"pending","durationSeconds":2,"posterId":"photo-smile" },
     { "id":"video-final","kind":"video","privatePath":"WhatsApp Video 2026-08-01 at 11.45.25 PM.mp4","alt":"Short shared portrait video","caption":"Just us.","approval":"pending","durationSeconds":1,"posterId":"photo-sky" },
     { "id":"music-selected","kind":"audio","privatePath":"Sun Raha Hai Na Tu (SlowedReverb)#song #shorts.mp4","alt":"Selected background track","caption":"Background music","approval":"pending" },
-    { "id":"voice-birthday","kind":"audio","privatePath":"client(rashi).mp4","alt":"A private birthday voice note","caption":"A Little Surprise ♥","approval":"pending" },
+    { "id":"voice-birthday","kind":"audio","privatePath":"client(rashi).m4a","alt":"A private birthday voice note","caption":"A Little Surprise ♥","approval":"pending" },
     { "id":"voice-keep-listening","kind":"audio","privatePath":"dad.opus","alt":"An anonymous birthday voice note","caption":"Keep Listening ♥","approval":"pending" },
     { "id":"voice-another-surprise","kind":"audio","privatePath":"aunty.opus","alt":"An anonymous birthday voice note","caption":"Another Little Surprise ♥","approval":"pending" },
     { "id":"voice-one-more","kind":"audio","privatePath":"mom.opus","alt":"An anonymous birthday voice note","caption":"One More Message ♥","approval":"pending" },
